@@ -2350,8 +2350,6 @@ module.request = function(context, verb, options, entity, callback) {
     json:    true
   }
 
-  console.log('lib request opts', opts);
-
   if (entity && entity.allowDuplicateDocNum) {
     delete entity.allowDuplicateDocNum;
     opts.qs.include = 'allowduplicatedocnum';
@@ -2384,7 +2382,10 @@ module.request = function(context, verb, options, entity, callback) {
   if ('production' !== process.env.NODE_ENV && context.debug) {
     debug(request)
   }
+
+  console.log('lib request opts', opts);
   request[verb].call(context, opts, function (err, res, body) {
+    console.log('lib request callback', {err, res, body});
     if ('production' !== process.env.NODE_ENV && context.debug) {
       console.log('invoking endpoint: ' + url)
       console.log(entity || '')
