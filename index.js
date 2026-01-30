@@ -206,8 +206,8 @@ QuickBooks.prototype.getUserInfo = function(callback) {
  * @param  {object} items - JavaScript array of batch items
  * @param  {function} callback - Callback function which is called with any error and list of BatchItemResponses
  */
-QuickBooks.prototype.batch = function(items, callback) {
-  module.request(this, 'post', {url: '/batch'}, {BatchItemRequest: items}, callback)
+QuickBooks.prototype.batch = function(items, callback, opts = {}) {
+  module.request(this, 'post', {...opts, url: '/batch'}, {BatchItemRequest: items}, callback)
 }
 
 /**
@@ -2426,10 +2426,10 @@ module.create = function(context, entityName, entity, callback) {
   module.request(context, 'post', {url: url}, entity, module.unwrap(callback, entityName))
 }
 
-module.read = function(context, entityName, id, callback) {
+module.read = function(context, entityName, id, callback, opts = {}) {
   var url = '/' + entityName.toLowerCase()
   if (id) url = url + '/' + id
-  module.request(context, 'get', {url: url}, null, module.unwrap(callback, entityName))
+  module.request(context, 'get', {...opts, url: url}, null, module.unwrap(callback, entityName))
 }
 
 module.update = function(context, entityName, entity, callback, opts = {}) {
