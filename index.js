@@ -2385,7 +2385,7 @@ module.request = function(context, verb, options, entity, callback) {
 
   console.log('lib request opts', opts);
   request[verb].call(context, opts, function (err, res, body) {
-    console.log('lib request callback', {err, res, body});
+    console.log('lib request body', JSON.stringify(body, null, 2));
     if ('production' !== process.env.NODE_ENV && context.debug) {
       console.log('invoking endpoint: ' + url)
       console.log(entity || '')
