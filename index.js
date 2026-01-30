@@ -207,6 +207,7 @@ QuickBooks.prototype.getUserInfo = function(callback) {
  * @param  {function} callback - Callback function which is called with any error and list of BatchItemResponses
  */
 QuickBooks.prototype.batch = function(items, callback, opts = {}) {
+  console.log('lib batch opts', opts);
   module.request(this, 'post', {...opts, url: '/batch'}, {BatchItemRequest: items}, callback)
 }
 
@@ -2349,6 +2350,8 @@ module.request = function(context, verb, options, entity, callback) {
     json:    true
   }
 
+  console.log('lib request opts', opts);
+
   if (entity && entity.allowDuplicateDocNum) {
     delete entity.allowDuplicateDocNum;
     opts.qs.include = 'allowduplicatedocnum';
@@ -2427,6 +2430,7 @@ module.create = function(context, entityName, entity, callback) {
 }
 
 module.read = function(context, entityName, id, callback, opts = {}) {
+  console.log('lib read opts', opts);
   var url = '/' + entityName.toLowerCase()
   if (id) url = url + '/' + id
   module.request(context, 'get', {...opts, url: url}, null, module.unwrap(callback, entityName))
