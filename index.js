@@ -1555,6 +1555,22 @@ QuickBooks.prototype.voidPayment = function (payment, callback) {
     module.update(this, 'payment', payment, callback)
 }
 
+/**
+ * Finds all entities in QuickBooks, optionally matching the specified criteria
+ *
+ * @param  {string} entityType - The type of entity to find
+ * @param  {object} criteria - (Optional) String or single-valued map converted to a where clause of the form "where key = 'value'"
+ * @param  {object} opts - (Optional) Options object
+ * @param  {function} callback - Callback function which is called with any error and the list of entities
+ */
+QuickBooks.prototype.findEntities = function(entityType, criteria, opts, callback) {
+  module.query(this, entityType, criteria, opts).then(function(data) {
+    (callback || criteria)(null, data)
+  }).catch(function(err) {
+    (callback || criteria)(err, err)
+  })
+}
+
 
 /**
  * Finds all Accounts in QuickBooks, optionally matching the specified criteria
@@ -2490,7 +2506,7 @@ module.void = function (context, entityName, idOrEntity, callback) {
 // **********************  Query Api **********************
 module.requestPromise = Promise.promisify(module.request)
 
-module.query = function(context, entity, criteria) {
+module.query = function(context, entity, criteria, opts = {}) {
 
   // criteria is potentially mutated within this function -
   // so make a copy of it first
@@ -2559,7 +2575,7 @@ module.query = function(context, entity, criteria) {
   url = url.replace('@@', '=')
 
   return new Promise(function(resolve, reject) {
-    module.requestPromise(context, 'get', {url: url}, null).then(function(data) {
+    module.requestPromise(context, 'get', {...opts, url: url}, null).then(function(data) {
       var fields = Object.keys(data.QueryResponse)
       var key = _.find(fields, function(k) { return k.toLowerCase() === entity.toLowerCase()})
       if (fetchAll) {
