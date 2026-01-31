@@ -2574,6 +2574,8 @@ module.query = function(context, entity, criteria, opts = {}) {
   }
   url = url.replace('@@', '=')
 
+  console.log({url, opts});
+
   return new Promise(function(resolve, reject) {
     module.requestPromise(context, 'get', {...opts, url: url}, null).then(function(data) {
       var fields = Object.keys(data.QueryResponse)
