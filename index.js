@@ -231,7 +231,7 @@ QuickBooks.prototype.changeDataCapture = function(entities, since, callback) {
  *
  * @param  {string} filename - the name of the file
  * @param  {string} contentType - the mime type of the file
- * @param  {object} stream - ReadableStream of file contents
+ * @param  {Buffer|object} stream - Buffer or ReadableStream of file contents (Buffer may give more reliable uploads via Content-Length)
  * @param  {object} entityType - optional string name of the QBO entity the Attachable will be linked to (e.g. Invoice)
  * @param  {object} entityId - optional Id of the QBO entity the Attachable will be linked to
  * @param  {function} callback - callback which receives the newly created Attachable
@@ -2393,6 +2393,7 @@ module.request = function(context, verb, options, entity, callback) {
   }
   if (options.formData) {
     opts.formData = options.formData
+    opts.json = false
   }
   if ('production' !== process.env.NODE_ENV && context.debug) {
     debug(request)
@@ -2404,10 +2405,32 @@ module.request = function(context, verb, options, entity, callback) {
       console.log(JSON.stringify(body, null, 2));
     }
     if (callback) {
-      if (err ||
-          res.statusCode >= 300 ||
-          (_.isObject(body) && body.Fault && body.Fault.Error && body.Fault.Error.length) ||
-          (_.isString(body) && !_.isEmpty(body) && body.indexOf('<') === 0)) {
+      // Upload endpoint returns XML; parse it and normalize to expected shape
+      if (
+        options.url === '/upload' &&
+        !err &&
+        res &&
+        res.statusCode < 300 &&
+        typeof body === 'string' &&
+        body.trim().indexOf('<') === 0
+      ) {
+        try {
+          var parsed = xmlParser.parse(body)
+          var attachableResponse = parsed.IntuitResponse && parsed.IntuitResponse.AttachableResponse
+          if (attachableResponse) {
+            body = { AttachableResponse: [attachableResponse] }
+            return callback(null, body, res)
+          }
+        } catch (e) {
+          // Fall through to error path
+        }
+      }
+      if (
+        err ||
+        res.statusCode >= 300 ||
+        (_.isObject(body) && body.Fault && body.Fault.Error && body.Fault.Error.length) ||
+        (_.isString(body) && !_.isEmpty(body) && body.indexOf('<') === 0)
+      ) {
         callback(err || body, body, res)
       } else {
         callback(null, body, res)
