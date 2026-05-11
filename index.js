@@ -731,7 +731,7 @@ QuickBooks.prototype.sendEstimatePdf = function(id, sendTo, callback) {
   var path = '/estimate/' + id + '/send'
   callback = _.isFunction(sendTo) ? sendTo : callback
   if (sendTo && ! _.isFunction(sendTo)) {
-    path += '?sendTo=' + sendTo
+    path += '?sendTo=' + encodeURIComponent(sendTo)
   }
   module.request(this, 'post', {url: path}, null, module.unwrap(callback, 'Estimate'))
 }
@@ -768,7 +768,7 @@ QuickBooks.prototype.sendInvoicePdf = function(id, sendTo, callback) {
   var path = '/invoice/' + id + '/send'
   callback = _.isFunction(sendTo) ? sendTo : callback
   if (sendTo && ! _.isFunction(sendTo)) {
-    path += '?sendTo=' + sendTo
+    path += '?sendTo=' + encodeURIComponent(sendTo)
   }
   module.request(this, 'post', {url: path}, null, module.unwrap(callback, 'Invoice'))
 }
@@ -795,7 +795,7 @@ QuickBooks.prototype.sendInvoicePdf = function(id, sendTo, callback) {
     var path = '/creditmemo/' + id + '/send'
     callback = _.isFunction(sendTo) ? sendTo : callback
     if (sendTo && ! _.isFunction(sendTo)) {
-      path += '?sendTo=' + sendTo
+      path += '?sendTo=' + encodeURIComponent(sendTo)
     }
     module.request(this, 'post', {url: path}, null, module.unwrap(callback, 'CreditMemo'))
   }
@@ -812,7 +812,7 @@ QuickBooks.prototype.sendPurchaseOrder = function(id, sendTo, callback) {
   var path = '/purchaseorder/' + id + '/send'
   callback = _.isFunction(sendTo) ? sendTo : callback
   if (sendTo && ! _.isFunction(sendTo)) {
-    path += '?sendTo=' + sendTo
+    path += '?sendTo=' + encodeURIComponent(sendTo)
   }
   module.request(this, 'post', {url: path}, null, module.unwrap(callback, 'PurchaseOrder'))
 }
@@ -948,7 +948,7 @@ QuickBooks.prototype.sendSalesReceiptPdf = function(id, sendTo, callback) {
   var path = '/salesreceipt/' + id + '/send'
   callback = _.isFunction(sendTo) ? sendTo : callback
   if (sendTo && ! _.isFunction(sendTo)) {
-    path += '?sendTo=' + sendTo
+    path += '?sendTo=' + encodeURIComponent(sendTo)
   }
   module.request(this, 'post', {url: path}, null, module.unwrap(callback, 'SalesReceipt'))
 }
