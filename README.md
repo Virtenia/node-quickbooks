@@ -77,6 +77,11 @@ qbo.upload(
 
 ```
 
+Token refresh is explicit: API requests never call `refreshAccessToken` automatically.
+Applications may manage refresh themselves. When used, `refreshAccessToken` replaces
+both instance tokens only after a successful response containing nonempty access
+and refresh tokens; the application remains responsible for persisting them.
+
 #### Query
 
 `findEntities(entityType, criteria, opts, callback)` accepts `opts.qs` for query
@@ -89,6 +94,8 @@ Intuit's `err.Fault` structure. Transport failures without a response body retur
 an `Error` with a message and, when available, a `code`, without Axios request
 metadata. The optional response argument remains the raw Axios response and can
 contain credentials in its request metadata.
+Exceptions thrown by application callbacks propagate as uncaught exceptions and
+never cause a second callback invocation.
 
 ###### Filters
 All query functions take an optional first argument object which will be converted to a

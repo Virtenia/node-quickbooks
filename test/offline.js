@@ -437,13 +437,16 @@ describe('Offline merge regressions', function () {
     });
   });
 
-  it('reports HTTP errors with the response and body', async function () {
+  it('reports authorization failures without refreshing tokens automatically', async function () {
     var fault = { Fault: { Error: [{ Message: 'Unauthorized' }] } };
     reply = function () { return { status: 401, body: fault }; };
     var result = await call('batch', [[]]);
     assert.deepStrictEqual(result.err, fault);
     assert.deepStrictEqual(result.data, fault);
     assert.strictEqual(result.res.status, 401);
+    assert.strictEqual(requests.length, 1);
+    assert.strictEqual(qbo.token, 'token');
+    assert.strictEqual(qbo.refreshToken, 'refresh');
   });
 
   [
@@ -553,4 +556,90 @@ describe('Offline merge regressions', function () {
     assert.strictEqual(qbo.refreshToken, null);
     assert.strictEqual(qbo.realmId, null);
   });
+
+  [false, true].forEach(function (fails) {
+    it('delivers throwing callbacks exactly once on ' + (fails ? 'failure' : 'success'), async function () {
+      this.timeout(30000);
+      var methods = ['batch', 'createInvoice', 'refreshAccessToken', 'revokeAccess', 'reconnect', 'disconnect']
+        .concat(Object.keys(QuickBooks.prototype).filter(function (name) { return /^find/.test(name); }));
+      for (var method of methods) {
+        reply = function () {
+          if (fails) return { status: 400, body: { error: 'rejected' } };
+          if (method === 'refreshAccessToken') return { body: { access_token: 'new', refresh_token: 'new-refresh' } };
+          if (method === 'reconnect' || method === 'disconnect') {
+            var root = method === 'reconnect' ? 'ReconnectResponse' : 'PlatformResponse';
+            return { type: 'application/xml', body: '<' + root + '><ErrorCode>0</ErrorCode></' + root + '>' };
+          }
+          return { body: { QueryResponse: {}, Invoice: { Id: '1' } } };
+        };
+        await new Promise(function (resolve, reject) {
+          require('child_process').execFile(process.execPath, [
+            require.resolve('./fixtures/callback-throw'), endpoint, method, String(fails)
+          ], { timeout: 7000 }, function (err, stdout, stderr) {
+            if (err) reject(new Error(method + ': ' + stderr + '\n' + err));
+            else resolve();
+          });
+        });
+      }
+    });
+  });
+
+  ['reconnect', 'disconnect'].forEach(function (method) {
+    [
+      { disconnect: true },
+      { body: '<Unexpected><ErrorCode>0</ErrorCode></Unexpected>', type: 'application/xml' },
+      { body: '<', type: 'application/xml' },
+      { body: '<ReconnectResponse><ErrorCode>0', type: 'application/xml' },
+      { body: null },
+      { body: {} },
+      { status: 500, body: '<ReconnectResponse><ErrorCode>0</ErrorCode></ReconnectResponse>', type: 'application/xml' }
+    ].forEach(function (response, index) {
+      it('reports ' + method + ' transport/invalid response ' + index + ' through its callback', async function () {
+        QuickBooks.RECONNECT_URL = QuickBooks.DISCONNECT_URL = endpoint;
+        reply = function () { return response; };
+        var result = await call(method, []);
+        assert.ok(result.err);
+      });
+    });
+  });
+
+  [200, 400].forEach(function (status) {
+    [null, {}, { error: 'invalid_grant' }, { access_token: 'new' },
+      { access_token: '', refresh_token: 'new' }, { access_token: 'new', refresh_token: 123 },
+      { access_token: 'new', refresh_token: ' ' },
+      { access_token: 'new', refresh_token: 'new', error: 'invalid_grant' }
+    ].forEach(function (body, index) {
+      it('preserves both tokens on invalid refresh response ' + index + ' with HTTP ' + status, async function () {
+        QuickBooks.TOKEN_URL = endpoint;
+        var axios = require('axios'), validateStatus = axios.defaults.validateStatus;
+        axios.defaults.validateStatus = function () { return true; };
+        reply = function () { return { status: status, body: body }; };
+        try {
+          var result = await call('refreshAccessToken', []);
+          assert.ok(result.err);
+          assert.strictEqual(qbo.token, 'token');
+          assert.strictEqual(qbo.refreshToken, 'refresh');
+          assert.strictEqual(result.data.status, status);
+        } finally { axios.defaults.validateStatus = validateStatus; }
+      });
+    });
+  });
+
+  ['refreshAccessToken', 'revokeAccess'].forEach(function (method) {
+    it('rejects HTTP failure for ' + method + ' even if Axios accepts it', async function () {
+      QuickBooks.TOKEN_URL = QuickBooks.REVOKE_URL = endpoint;
+      var axios = require('axios'), validateStatus = axios.defaults.validateStatus;
+      axios.defaults.validateStatus = function () { return true; };
+      var body = { access_token: 'new', refresh_token: 'new-refresh' };
+      reply = function () { return { status: 400, body: body }; };
+      try {
+        var result = await call(method, method === 'revokeAccess' ? [true] : []);
+        assert.deepStrictEqual(result.err, body);
+        assert.strictEqual(qbo.token, 'token');
+        assert.strictEqual(qbo.refreshToken, 'refresh');
+        assert.strictEqual(qbo.realmId, 'realm');
+      } finally { axios.defaults.validateStatus = validateStatus; }
+    });
+  });
+
 });
