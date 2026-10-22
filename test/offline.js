@@ -77,6 +77,7 @@ describe('Offline merge regressions', function () {
       assert.strictEqual(requests[0].url.searchParams.get('sendTo'), email);
       assert.strictEqual(requests[0].url.searchParams.get('minorversion'), '75');
       assert.strictEqual(requests[0].headers.authorization, 'Bearer token');
+      assert.strictEqual(requests[0].body.length, 0);
     });
   });
 
@@ -86,19 +87,21 @@ describe('Offline merge regressions', function () {
       var body = {};
       body[entity] = { Id: '123' };
       reply = function () { return { body: body }; };
+      var requestId = 'retry+id &?#é';
       for (var i = 0; i < 2; i++) {
         var result = await new Promise(function (resolve) {
           qbo[method]('123', 'billing+tag@example.com', function (err, data) {
             resolve({ err: err, data: data });
-          }, 'retry-id');
+          }, requestId);
         });
         assert.ifError(result.err);
         assert.strictEqual(result.data.Id, '123');
       }
       assert.strictEqual(requests.length, 2);
       requests.forEach(function (request) {
-        assert.strictEqual(request.url.searchParams.get('requestid'), 'retry-id');
+        assert.strictEqual(request.url.searchParams.get('requestid'), requestId);
         assert.strictEqual(request.url.searchParams.get('sendTo'), 'billing+tag@example.com');
+        assert.strictEqual(request.body.length, 0);
       });
     });
 
@@ -111,6 +114,24 @@ describe('Offline merge regressions', function () {
       assert.strictEqual(result.data.Id, '123');
       assert.strictEqual(requests[0].url.searchParams.has('sendTo'), false);
       assert.strictEqual(requests[0].url.searchParams.has('requestid'), false);
+    });
+
+    [undefined, ''].forEach(function (recipient) {
+      it('supports a request ID with recipient ' + String(recipient) + ' for ' + method, async function () {
+        var body = {};
+        body[entity] = { Id: '123' };
+        reply = function () { return { body: body }; };
+        var result = await new Promise(function (resolve) {
+          qbo[method]('123', recipient, function (err, data) {
+            resolve({ err: err, data: data });
+          }, 'retry-id');
+        });
+        assert.ifError(result.err);
+        assert.strictEqual(result.data.Id, '123');
+        assert.strictEqual(requests[0].url.searchParams.has('sendTo'), false);
+        assert.strictEqual(requests[0].url.searchParams.get('requestid'), 'retry-id');
+        assert.strictEqual(requests[0].body.length, 0);
+      });
     });
   });
 
@@ -182,6 +203,41 @@ describe('Offline merge regressions', function () {
     assert.strictEqual(result.data, null);
   });
 
+  it('reports malformed XML uploads when parsing throws', async function () {
+    reply = function () { return { type: 'application/xml', body: '<IntuitResponse><AttachableResponse a="' }; };
+    var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
+    assert.strictEqual(result.err, '<IntuitResponse><AttachableResponse a="');
+    assert.strictEqual(result.data, null);
+  });
+
+  it('does not normalize an XML attachment returned with an HTTP error into success', async function () {
+    reply = function () {
+      return { status: 500, type: 'application/xml', body: '<IntuitResponse><AttachableResponse>' +
+        '<Attachable><Id>42</Id></Attachable></AttachableResponse></IntuitResponse>' };
+    };
+    var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
+    assert.ok(result.err);
+    assert.strictEqual(result.err.response.status, 500);
+    assert.strictEqual(result.data, null);
+  });
+
+  ['json', 'xml'].forEach(function (format) {
+    it('rejects HTTP upload errors when shared Axios defaults accept them (' + format + ')', async function () {
+      var axios = require('axios'), validateStatus = axios.defaults.validateStatus;
+      var body = format === 'json' ? { AttachableResponse: [{ Attachable: { Id: '42' } }] }
+        : '<IntuitResponse><AttachableResponse><Attachable><Id>42</Id></Attachable></AttachableResponse></IntuitResponse>';
+      reply = function () { return { status: 500, type: 'application/' + format, body: body }; };
+      try {
+        axios.defaults.validateStatus = function () { return true; };
+        var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
+        assert.deepStrictEqual(result.err, body);
+        assert.strictEqual(result.data, null);
+      } finally {
+        axios.defaults.validateStatus = validateStatus;
+      }
+    });
+  });
+
   it('preserves findEntities criteria, query parameters, and headers', async function () {
     reply = function () { return { body: { QueryResponse: { Invoice: [{ Id: '1' }] } } }; };
     var criteria = { DocNumber: 'A+B & C' };
@@ -209,6 +265,67 @@ describe('Offline merge regressions', function () {
     var result = await call('findEntities', ['Invoice', {}, {}]);
     assert.ok(result.err);
     assert.strictEqual(result.err.response.status, 400);
+  });
+
+  ['object', 'array'].forEach(function (format) {
+    it('preserves options across every page with ' + format + ' criteria', async function () {
+      var criteria = format === 'object' ? { fetchAll: true, limit: 1 }
+        : [{ field: 'fetchAll', value: true }, { field: 'limit', value: 1 }];
+      var original = JSON.parse(JSON.stringify(criteria));
+      reply = function () {
+        var page = requests.length;
+        return { body: {
+          QueryResponse: { Invoice: page < 3 ? [{ Id: String(page) }] : [], maxResults: page < 3 ? 1 : 0 },
+          time: 'page-' + page
+        } };
+      };
+      var result = await call('findEntities', ['Invoice', criteria, {
+        qs: { minorversion: 80, requestid: 'query-id' }, headers: { 'X-Custom': 'query-header' }
+      }]);
+      assert.ifError(result.err);
+      assert.deepStrictEqual(result.data.QueryResponse.Invoice, [{ Id: '1' }, { Id: '2' }]);
+      assert.strictEqual(result.data.QueryResponse.maxResults, 2);
+      assert.strictEqual(result.data.time, 'page-3');
+      assert.deepStrictEqual(criteria, original);
+      assert.strictEqual(requests.length, 3);
+      requests.forEach(function (request, index) {
+        assert.match(request.url.searchParams.get('query'), new RegExp('startposition ' + (index + 1) + ' maxresults 1'));
+        assert.strictEqual(request.url.searchParams.get('minorversion'), '80');
+        assert.strictEqual(request.url.searchParams.get('requestid'), 'query-id');
+        assert.strictEqual(request.headers['x-custom'], 'query-header');
+      });
+    });
+  });
+
+  it('reports failures from later pages with their query options intact', async function () {
+    reply = function () {
+      return requests.length === 1
+        ? { body: { QueryResponse: { Invoice: [{ Id: '1' }], maxResults: 1 } } }
+        : { status: 400, body: { Fault: { Error: [{ Message: 'Later page failed' }] } } };
+    };
+    var result = await call('findEntities', ['Invoice', { fetchAll: true, limit: 1 }, {
+      qs: { minorversion: 80 }, headers: { 'X-Custom': 'query-header' }
+    }]);
+    assert.ok(result.err);
+    assert.strictEqual(result.err.response.status, 400);
+    assert.strictEqual(requests.length, 2);
+    assert.strictEqual(requests[1].url.searchParams.get('minorversion'), '80');
+    assert.strictEqual(requests[1].headers['x-custom'], 'query-header');
+  });
+
+  it('preserves pagination without options for upstream find methods', async function () {
+    reply = function () {
+      return { body: { QueryResponse: {
+        Invoice: requests.length === 1 ? [{ Id: '1' }] : [], maxResults: requests.length === 1 ? 1 : 0
+      } } };
+    };
+    var result = await call('findInvoices', [{ fetchAll: true, limit: 1 }]);
+    assert.ifError(result.err);
+    assert.deepStrictEqual(result.data.QueryResponse.Invoice, [{ Id: '1' }]);
+    assert.strictEqual(requests.length, 2);
+    requests.forEach(function (request) {
+      assert.strictEqual(request.url.searchParams.get('minorversion'), '75');
+    });
   });
 
   it('preserves duplicate-document and request-ID options on entity writes', async function () {

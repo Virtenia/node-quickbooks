@@ -722,11 +722,8 @@ QuickBooks.prototype.sendEstimatePdf = function (id, sendTo, callback, requestId
   if (sendTo && !_.isFunction(sendTo)) {
     path += '?sendTo=' + encodeURIComponent(sendTo)
   }
-  var opts = { url: path }
-  if (requestId) {
-    opts.qs = { requestid: requestId }
-  }
-  module.request(this, 'post', opts, null, module.unwrap(callback, 'Estimate'))
+  module.request(this, 'post', { url: path, qs: requestId ? { requestid: requestId } : undefined },
+    null, module.unwrap(callback, 'Estimate'))
 }
 
 /**
@@ -764,11 +761,8 @@ QuickBooks.prototype.sendInvoicePdf = function (id, sendTo, callback, requestId)
   if (sendTo && !_.isFunction(sendTo)) {
     path += '?sendTo=' + encodeURIComponent(sendTo)
   }
-  var opts = { url: path }
-  if (requestId) {
-    opts.qs = { requestid: requestId }
-  }
-  module.request(this, 'post', opts, null, module.unwrap(callback, 'Invoice'))
+  module.request(this, 'post', { url: path, qs: requestId ? { requestid: requestId } : undefined },
+    null, module.unwrap(callback, 'Invoice'))
 }
 
 /**
@@ -2432,30 +2426,19 @@ module.request = function (context, verb, options, entity, callback) {
       console.log(JSON.stringify(body, null, 2));
     }
     if (callback) {
-      // Upload endpoint returns XML; parse it and normalize to expected shape
-      if (
-        options.url === '/upload' &&
-        res &&
-        res.status < 300 &&
-        typeof body === 'string' &&
-        body.trim().indexOf('<') === 0
-      ) {
+      // Normalize upload XML before the shared error/callback handling.
+      if (options.url === '/upload' && res.status < 300 && typeof body === 'string' && body.trim().indexOf('<') === 0) {
         try {
           var parsed = xmlParser.parse(body)
           var attachableResponse = parsed.IntuitResponse && parsed.IntuitResponse.AttachableResponse
-          if (attachableResponse) {
-            body = { AttachableResponse: [attachableResponse] }
-            return callback(null, body, res)
-          }
+          if (attachableResponse) body = { AttachableResponse: [attachableResponse] }
         } catch (e) {
-          // Fall through to error path
+          // Unparsed XML falls through to the error path.
         }
       }
-      if (
-        res.status >= 300 ||
-        (_.isObject(body) && body.Fault && body.Fault.Error && body.Fault.Error.length) ||
-        (_.isString(body) && !_.isEmpty(body) && body.trim().indexOf('<') === 0)
-      ) {
+      if (res.status >= 300 ||
+          (_.isObject(body) && body.Fault && body.Fault.Error && body.Fault.Error.length) ||
+          (_.isString(body) && !_.isEmpty(body) && body.trim().indexOf('<') === 0)) {
         callback(body, body, res)
       } else {
         callback(null, body, res)
@@ -2646,7 +2629,7 @@ module.query = function (context, entity, criteria, opts = {}) {
           } else if (_.isObject(criteria)) {
             criteria.offset = criteria.offset + limit
           }
-          return module.query(context, entity, criteria).then(function (more) {
+          return module.query(context, entity, criteria, opts).then(function (more) {
             data.QueryResponse[key] = data.QueryResponse[key].concat(more.QueryResponse[key] || [])
             data.QueryResponse.maxResults = data.QueryResponse.maxResults + (more.QueryResponse.maxResults || 0)
             data.time = more.time || data.time
