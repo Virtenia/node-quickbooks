@@ -6,6 +6,7 @@ var assert = require('assert'),
 describe('Offline merge regressions', function () {
   var server, endpoint, qbo, requests, reply;
   var tokenUrl = QuickBooks.TOKEN_URL, revokeUrl = QuickBooks.REVOKE_URL;
+  var reconnectUrl = QuickBooks.RECONNECT_URL, disconnectUrl = QuickBooks.DISCONNECT_URL;
 
   // Use the real HTTP transport against a local server, without QBO credentials.
   before(function (done) {
@@ -46,6 +47,8 @@ describe('Offline merge regressions', function () {
   afterEach(function () {
     QuickBooks.TOKEN_URL = tokenUrl;
     QuickBooks.REVOKE_URL = revokeUrl;
+    QuickBooks.RECONNECT_URL = reconnectUrl;
+    QuickBooks.DISCONNECT_URL = disconnectUrl;
   });
 
   function call(method, args) {
@@ -185,6 +188,26 @@ describe('Offline merge regressions', function () {
     assert.strictEqual(requests[1].url.searchParams.get('operation'), 'update');
   });
 
+  it('preserves default XML value conversion and entities in attachment responses', async function () {
+    reply = function () {
+      return { type: 'application/xml', body: '<?xml version="1.0" encoding="UTF-8"?>' +
+        '<IntuitResponse xmlns="http://schema.intuit.com/finance/v3" time="2026-10-22T00:00:00Z">' +
+        '<AttachableResponse><Attachable domain="QBO"><Id>00042</Id><SyncToken>0</SyncToken>' +
+        '<FileName>invoice &amp; receipt.pdf</FileName><Size>00123</Size><Active>false</Active>' +
+        '<Note><![CDATA[Invoice <A> & receipt]]></Note><ContentType>application/pdf</ContentType>' +
+        '<TempDownloadUri>https://example.com/file?a=1&amp;b=2</TempDownloadUri>' +
+        '<Category>invoice</Category><Category>receipt</Category>' +
+        '</Attachable></AttachableResponse></IntuitResponse>' };
+    };
+    var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
+    assert.ifError(result.err);
+    assert.deepStrictEqual(result.data, {
+      Id: 42, SyncToken: 0, FileName: 'invoice & receipt.pdf', Size: 123, Active: false,
+      Note: 'Invoice <A> & receipt', ContentType: 'application/pdf',
+      TempDownloadUri: 'https://example.com/file?a=1&b=2', Category: ['invoice', 'receipt']
+    });
+  });
+
   it('reports XML upload faults instead of treating them as success', async function () {
     reply = function () {
       return { type: 'application/xml', body: '<IntuitResponse><AttachableResponse>' +
@@ -194,6 +217,43 @@ describe('Offline merge regressions', function () {
     var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
     assert.ok(result.err.Fault);
     assert.strictEqual(result.data, null);
+  });
+
+  it('preserves XML fault details and repeated errors', async function () {
+    reply = function () {
+      return { type: 'application/xml', body: '<IntuitResponse><AttachableResponse><Fault type="ValidationFault">' +
+        '<Error code="1"><Message>Invalid &amp; rejected</Message><Detail>First problem</Detail></Error>' +
+        '<Error code="2"><Message>Missing value</Message><Detail>Second problem</Detail></Error>' +
+        '</Fault></AttachableResponse></IntuitResponse>' };
+    };
+    var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
+    assert.deepStrictEqual(result.err, { Fault: { Error: [
+      { Message: 'Invalid & rejected', Detail: 'First problem' },
+      { Message: 'Missing value', Detail: 'Second problem' }
+    ] } });
+    assert.strictEqual(result.data, null);
+  });
+
+  [
+    ['reconnect', 'ReconnectResponse', 'RECONNECT_URL'],
+    ['disconnect', 'PlatformResponse', 'DISCONNECT_URL']
+  ].forEach(function (item) {
+    [0, 42].forEach(function (errorCode) {
+      it('parses ' + item[0] + ' XML with error code ' + errorCode, async function () {
+        QuickBooks[item[2]] = endpoint + item[0];
+        reply = function () {
+          return { type: 'application/xml', body: '<?xml version="1.0" encoding="UTF-8"?>' +
+            '<' + item[1] + ' xmlns="http://platform.intuit.com/api/v1">' +
+            '<ErrorCode>' + errorCode + '</ErrorCode><ErrorMessage>Access &amp; token</ErrorMessage>' +
+            '<OAuthToken>token-123</OAuthToken><ExpiresIn>180</ExpiresIn></' + item[1] + '>' };
+        };
+        var result = await call(item[0], []);
+        var expected = { ErrorCode: errorCode, ErrorMessage: 'Access & token', OAuthToken: 'token-123', ExpiresIn: 180 };
+        assert.deepStrictEqual(result.data, expected);
+        assert.deepStrictEqual(result.err, errorCode === 0 ? null : expected);
+        assert.strictEqual(requests[0].url.pathname, '/' + item[0]);
+      });
+    });
   });
 
   it('reports unrecognized XML uploads through the callback', async function () {
