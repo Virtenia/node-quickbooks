@@ -3,6 +3,9 @@ var assert = require('assert'),
     Readable = require('stream').Readable,
     QuickBooks = require('../index');
 
+// Synthetic fixtures follow Intuit's schemas; no customer data is used:
+// https://static.developer.intuit.com/sdkdocs/qbv3doc/ippphpdevkitv3/entities/files/IPPFault.html
+// https://static.developer.intuit.com/sdkdocs/qbv3doc/ippphpdevkitv3/entities/files/IPPAttachableResponse.html
 describe('Offline merge regressions', function () {
   var server, endpoint, qbo, requests, reply;
   var tokenUrl = QuickBooks.TOKEN_URL, revokeUrl = QuickBooks.REVOKE_URL;
@@ -22,6 +25,7 @@ describe('Offline merge regressions', function () {
         };
         requests.push(request);
         var response = reply(request);
+        if (response.disconnect) return req.socket.destroy();
         res.writeHead(response.status || 200, {
           'Content-Type': response.type || 'application/json'
         });
@@ -277,7 +281,7 @@ describe('Offline merge regressions', function () {
     };
     var result = await call('upload', ['file.pdf', 'application/pdf', Buffer.from('pdf')]);
     assert.ok(result.err);
-    assert.strictEqual(result.err.response.status, 500);
+    assert.match(result.err, /<IntuitResponse>/);
     assert.strictEqual(result.data, null);
   });
 
@@ -320,11 +324,23 @@ describe('Offline merge regressions', function () {
     assert.deepStrictEqual(result.data.QueryResponse.Invoice, []);
   });
 
+  [true, false].forEach(function (succeeds) {
+    it('supports three-argument findEntities on ' + (succeeds ? 'success' : 'failure'), async function () {
+      var body = succeeds ? { QueryResponse: { Invoice: [{ Id: '1' }] } }
+        : { Fault: { Error: [{ Message: 'Bad query' }] } };
+      reply = function () { return { status: succeeds ? 200 : 400, body: body }; };
+      var result = await call('findEntities', ['Invoice', { DocNumber: '42' }]);
+      assert.deepStrictEqual(result.err, succeeds ? null : body);
+      assert.deepStrictEqual(result.data, body);
+      assert.match(requests[0].url.searchParams.get('query'), /DocNumber = '42'/);
+    });
+  });
+
   it('reports query failures through findEntities', async function () {
-    reply = function () { return { status: 400, body: { Fault: { Error: [{ Message: 'Bad query' }] } } }; };
+    var fault = { Fault: { Error: [{ Message: 'Bad query' }] } };
+    reply = function () { return { status: 400, body: fault }; };
     var result = await call('findEntities', ['Invoice', {}, {}]);
-    assert.ok(result.err);
-    assert.strictEqual(result.err.response.status, 400);
+    assert.deepStrictEqual(result.err, fault);
   });
 
   ['object', 'array'].forEach(function (format) {
@@ -367,7 +383,7 @@ describe('Offline merge regressions', function () {
       qs: { minorversion: 80 }, headers: { 'X-Custom': 'query-header' }
     }]);
     assert.ok(result.err);
-    assert.strictEqual(result.err.response.status, 400);
+    assert.strictEqual(result.err.Fault.Error[0].Message, 'Later page failed');
     assert.strictEqual(requests.length, 2);
     assert.strictEqual(requests[1].url.searchParams.get('minorversion'), '80');
     assert.strictEqual(requests[1].headers['x-custom'], 'query-header');
@@ -408,13 +424,68 @@ describe('Offline merge regressions', function () {
     assert.strictEqual(requests[0].headers.accept, 'application/pdf');
   });
 
+  ['getInvoicePdf', 'getEstimatePdf'].forEach(function (method) {
+    [200, 401, 500].forEach(function (status) {
+      it('preserves JSON Faults returned by ' + method + ' with HTTP ' + status, async function () {
+        var fault = { Fault: { type: 'AuthorizationFault', Error: [{ code: '120', Message: 'Not authorized' }] } };
+        reply = function () { return { status: status, body: fault }; };
+        var result = await call(method, ['123']);
+        assert.deepStrictEqual(result.err, fault);
+        assert.strictEqual(result.data, null);
+        assert.strictEqual(result.res.status, status);
+      });
+    });
+  });
+
   it('reports HTTP errors with the response and body', async function () {
     var fault = { Fault: { Error: [{ Message: 'Unauthorized' }] } };
     reply = function () { return { status: 401, body: fault }; };
     var result = await call('batch', [[]]);
-    assert.ok(result.err);
+    assert.deepStrictEqual(result.err, fault);
     assert.deepStrictEqual(result.data, fault);
     assert.strictEqual(result.res.status, 401);
+  });
+
+  [
+    [401, 'AuthorizationFault', '120', 'AuthorizationFailure'],
+    [500, 'SystemFault', '10000', 'SystemFailureError'],
+    [429, 'ValidationFault', '3001', 'ThrottleExceeded']
+  ].forEach(function (item) {
+    ['1.0a', '2.0'].forEach(function (oauthversion) {
+      it('preserves HTTP ' + item[0] + ' Faults without OAuth ' + oauthversion + ' credentials', async function () {
+        qbo.oauthversion = oauthversion;
+        qbo.tokenSecret = 'token-secret';
+        var fault = { Fault: { type: item[1], Error: [{ code: item[2], Message: item[3], Detail: 'status code: ' + item[0] }] } };
+        if (item[0] === 500) fault.Fault.Error[0].element = 'SystemFailureError';
+        reply = function () { return { status: item[0], body: fault }; };
+        var result = await call('batch', [[]]);
+        assert.deepStrictEqual(result.err, fault);
+        assert.deepStrictEqual(result.data, fault);
+        assert.strictEqual(result.res.status, item[0]);
+        assert.strictEqual(result.err.config, undefined);
+        assert.strictEqual(result.err.request, undefined);
+        assert.strictEqual(result.err.response, undefined);
+      });
+    });
+  });
+
+  ['batch', 'refreshAccessToken', 'revokeAccess'].forEach(function (method) {
+    [true, false].forEach(function (disconnect) {
+      it('returns a safe ' + (disconnect ? 'network' : 'empty HTTP') + ' error for ' + method, async function () {
+        QuickBooks.TOKEN_URL = endpoint + 'token';
+        QuickBooks.REVOKE_URL = endpoint + 'revoke';
+        reply = function () { return disconnect ? { disconnect: true } : { status: 503, body: '' }; };
+        var result = await call(method, method === 'batch' ? [[]] : method === 'revokeAccess' ? [true] : []);
+        assert.ok(result.err instanceof Error);
+        assert.ok(result.err.message);
+        assert.strictEqual(result.err.code, disconnect ? 'ECONNRESET' : 'ERR_BAD_RESPONSE');
+        ['config', 'request', 'response', 'cause'].forEach(function (key) {
+          assert.strictEqual(result.err[key], undefined);
+        });
+        assert.strictEqual(qbo.token, 'token');
+        assert.strictEqual(qbo.refreshToken, 'refresh');
+      });
+    });
   });
 
   it('reports QBO faults even on HTTP success', async function () {
@@ -454,7 +525,21 @@ describe('Offline merge regressions', function () {
     QuickBooks.TOKEN_URL = endpoint + 'token';
     reply = function () { return { status: 400, body: { error: 'invalid_grant' } }; };
     var result = await call('refreshAccessToken', []);
-    assert.ok(result.err);
+    assert.deepStrictEqual(result.err, { error: 'invalid_grant' });
+    assert.strictEqual(result.data.status, 400);
+    assert.deepStrictEqual(result.res, { error: 'invalid_grant' });
+    assert.strictEqual(qbo.token, 'token');
+    assert.strictEqual(qbo.refreshToken, 'refresh');
+  });
+
+  it('preserves the OAuth revoke error body without Basic credentials', async function () {
+    QuickBooks.REVOKE_URL = endpoint + 'revoke';
+    var body = { error: 'invalid_token' };
+    reply = function () { return { status: 400, body: body }; };
+    var result = await call('revokeAccess', [true]);
+    assert.deepStrictEqual(result.err, body);
+    assert.strictEqual(result.data.status, 400);
+    assert.deepStrictEqual(result.res, body);
     assert.strictEqual(qbo.token, 'token');
     assert.strictEqual(qbo.refreshToken, 'refresh');
   });

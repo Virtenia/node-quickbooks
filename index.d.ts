@@ -520,6 +520,11 @@ export class QuickBooks {
   findEntities(
     entityType: string,
     criteria: QueryCriteria | QueryCriteria[] | string | undefined,
+    callback: QuickBooksCallback<QueryResponse<any>>
+  ): void;
+  findEntities(
+    entityType: string,
+    criteria: QueryCriteria | QueryCriteria[] | string | undefined,
     opts: { qs?: Record<string, any>; headers?: Record<string, string> } | undefined,
     callback: QuickBooksCallback<QueryResponse<any>>
   ): void;

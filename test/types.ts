@@ -4,6 +4,9 @@ declare const qbo: QuickBooks;
 const callback: QuickBooksCallback<QueryResponse<any>> = () => {};
 
 qbo.findEntities('Invoice', callback);
+qbo.findEntities('Invoice', { DocNumber: '42' }, callback);
+qbo.findEntities('Invoice', [{ field: 'Id', value: '1' }], callback);
+qbo.findEntities('Invoice', undefined, callback);
 qbo.findEntities('Invoice', { DocNumber: '42' }, {
   qs: { minorversion: 80, requestid: 'query-id' },
   headers: { 'X-Custom': 'query-header' }

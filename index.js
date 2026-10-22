@@ -138,7 +138,8 @@ QuickBooks.prototype.refreshAccessToken = function (callback) {
     this.token = refreshResponse.access_token;
     if (callback) callback(null, refreshResponse);
   }).bind(this)).catch((function (err) {
-    if (callback) callback(err, err.response, err.response ? err.response.data : null);
+    var body = module.responseBody(err.response)
+    if (callback) callback(module.requestError(err, body), err.response, body);
   }).bind(this));
 };
 
@@ -169,7 +170,8 @@ QuickBooks.prototype.revokeAccess = function (useRefresh, callback) {
     }
     if (callback) callback(null, res, res.data);
   }).bind(this)).catch((function (err) {
-    if (callback) callback(err, err.response, err.response ? err.response.data : null);
+    var body = module.responseBody(err.response)
+    if (callback) callback(module.requestError(err, body), err.response, body);
   }).bind(this));
 };
 
@@ -1556,6 +1558,10 @@ QuickBooks.prototype.voidPayment = function (payment, callback) {
  * @param  {function} callback - Callback function which is called with any error and the list of entities
  */
 QuickBooks.prototype.findEntities = function (entityType, criteria, opts, callback) {
+  if (_.isFunction(opts)) {
+    callback = opts
+    opts = undefined
+  }
   module.query(this, entityType, criteria, opts).then(function (data) {
     (callback || criteria)(null, data)
   }).catch(function (err) {
@@ -2345,6 +2351,23 @@ QuickBooks.prototype.reportJournalReport = function (options, callback) {
   module.report(this, 'JournalReport', options, callback)
 }
 
+// Preserve response-body errors without exposing Axios request credentials.
+module.requestError = function (err, body) {
+  if (body) return body
+  var error = new Error(err.message)
+  if (err.code) error.code = err.code
+  return error
+}
+
+module.responseBody = function (res) {
+  var body = res ? res.data : null
+  // PDF requests use arraybuffer, but Intuit can still return a JSON Fault.
+  if (Buffer.isBuffer(body)) {
+    try { return JSON.parse(body.toString('utf8')) } catch (e) { }
+  }
+  return body
+}
+
 module.request = function (context, verb, options, entity, callback) {
   var url = context.endpoint + context.realmId + options.url
   if (options.url === QuickBooks.RECONNECT_URL || options.url == QuickBooks.DISCONNECT_URL || options.url === QuickBooks.REVOKE_URL || options.url === QuickBooks.USER_INFO_URL) {
@@ -2419,7 +2442,7 @@ module.request = function (context, verb, options, entity, callback) {
   }
 
   axios(opts).then(function (res) {
-    var body = res.data;
+    var body = module.responseBody(res);
     if ('production' !== process.env.NODE_ENV && context.debug) {
       console.log('invoking endpoint: ' + url)
       console.log(entity || '')
@@ -2446,14 +2469,14 @@ module.request = function (context, verb, options, entity, callback) {
     }
   }).catch(function (err) {
     var res = err.response;
-    var body = res ? res.data : null;
+    var body = module.responseBody(res);
     if ('production' !== process.env.NODE_ENV && context.debug) {
       console.log('invoking endpoint: ' + url)
       console.log(entity || '')
       console.log(JSON.stringify(body, null, 2));
     }
     if (callback) {
-      callback(err || body, body, res)
+      callback(module.requestError(err, body), body, res)
     }
   })
 }

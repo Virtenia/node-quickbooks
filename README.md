@@ -6,6 +6,7 @@ nodejs client for Intuit's [QuickBooks API](https://developer.intuit.com/app/dev
 
 `npm install node-quickbooks`
 
+Requires Node.js 16 or newer.
 
 ## Documentation
 
@@ -77,6 +78,17 @@ qbo.upload(
 ```
 
 #### Query
+
+`findEntities(entityType, criteria, opts, callback)` accepts `opts.qs` for query
+parameters and `opts.headers` for request headers; both apply to every page when
+`fetchAll` is enabled. The `opts` argument can be omitted, and
+`findEntities(entityType, callback)` queries without criteria or options.
+
+API errors retain the response body as the callback's `err` argument, including
+Intuit's `err.Fault` structure. Transport failures without a response body return
+an `Error` with a message and, when available, a `code`, without Axios request
+metadata. The optional response argument remains the raw Axios response and can
+contain credentials in its request metadata.
 
 ###### Filters
 All query functions take an optional first argument object which will be converted to a

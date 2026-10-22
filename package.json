@@ -4,6 +4,9 @@
   "description": "node.js client for Intuit's IPP QuickBooks V3 API.",
   "main": "index.js",
   "types": "index.d.ts",
+  "engines": {
+    "node": ">=16"
+  },
   "scripts": {
     "test": "mocha",
     "test:offline": "mocha test/offline.js"
