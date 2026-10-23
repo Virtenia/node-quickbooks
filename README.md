@@ -8,6 +8,31 @@ nodejs client for Intuit's [QuickBooks API](https://developer.intuit.com/app/dev
 
 Requires Node.js 24 or newer.
 
+## TypeScript
+
+The package includes declarations for its CommonJS constructor and REST entities.
+Use `import QuickBooks = require('node-quickbooks')`, or a default import with
+`esModuleInterop` enabled. Types are available as named type imports and through
+the `QuickBooks` namespace; existing short names such as `Invoice` are aliases
+for the richer `QuickBooksInvoice` models.
+
+CRUD callbacks receive the entity itself, rather than an entity envelope. Check
+the error and the result before using it. Query callbacks retain `QueryResponse`,
+and PDF downloads return `Buffer` values. Errors are `unknown` because Intuit and
+transport failures can have different shapes.
+
+XML uploads can return numeric attachment IDs and version tokens. Attachment
+methods accept these values directly, as well as their string equivalents.
+
+Create inputs omit identity and metadata. Sparse update inputs require `Id` and
+`SyncToken`; optional references can be cleared with `null`. CDC results also
+include deletion records, which have an `Id` and `status: 'Deleted'` rather than
+a full entity. Response models describe REST data, without application-specific
+presentation fields or GraphQL Project models.
+
+Run `npm run test:types` to check the declaration contracts and invalid-input
+regressions independently of the live API tests.
+
 ## Documentation
 
 ```javascript

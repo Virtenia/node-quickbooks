@@ -1,1429 +1,2131 @@
-// ============================================
-// CALLBACK AND ERROR TYPES
-// ============================================
+/// <reference types="node" />
 
-export type QuickBooksCallback<T> = (
-  err: QuickBooksError | null,
-  data?: T,
-  res?: any
-) => void;
+import type { Buffer } from 'node:buffer';
+import type { Readable } from 'node:stream';
+import type { AxiosResponse } from 'axios';
 
-export interface QuickBooksError {
-  fault?: {
-    error?: Array<{
-      Message?: string;
-      Detail?: string;
-      code?: string;
-      element?: string;
-    }>;
-    type?: string;
-  };
-  message?: string;
-  [key: string]: any;
-}
-
-// ============================================
-// COMMON TYPES
-// ============================================
-
-export interface Ref {
-  value: string;
-  name?: string;
-}
-
-export interface QueryCriteria {
-  field?: string;
-  value?: any;
-  operator?: '=' | 'IN' | '<' | '>' | '<=' | '>=' | 'LIKE';
-  limit?: number;
-  offset?: number;
-  fetchAll?: boolean;
-  desc?: string;
-  asc?: string;
-  count?: boolean;
-  [key: string]: any;
-}
-
-export interface QueryResponse<T> {
-  QueryResponse?: {
-    [key: string]: T[] | number | undefined;
-    maxResults?: number;
-    startPosition?: number;
-  };
-  time?: string;
-}
-
-export interface EntityResponse<T> {
-  [key: string]: T | string | undefined;
-  time?: string;
-}
-
-export interface BatchItemRequest {
-  bId: string;
-  operation: 'create' | 'update' | 'delete' | 'query';
-  [key: string]: any;
-}
-
-export interface RefreshTokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in?: number;
-  token_type?: string;
-}
-
-// ============================================
-// ENTITY TYPES
-// ============================================
-
-export interface Account {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  AccountType?: string;
-  AccountSubType?: string;
-  Active?: boolean;
-  Classification?: string;
-  [key: string]: any;
-}
-
-export interface Attachable {
-  Id?: string;
-  SyncToken?: string;
-  FileName?: string;
-  ContentType?: string;
-  AttachableRef?: Array<{
-    EntityRef?: Ref;
-  }>;
-  [key: string]: any;
-}
-
-export interface Bill {
-  Id?: string;
-  SyncToken?: string;
-  VendorRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface BillPayment {
-  Id?: string;
-  SyncToken?: string;
-  VendorRef?: Ref;
-  PayType?: string;
-  [key: string]: any;
-}
-
-export interface Budget {
-  Id?: string;
-  Name?: string;
-  [key: string]: any;
-}
-
-export interface Class {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  Active?: boolean;
-  [key: string]: any;
-}
-
-export interface CompanyInfo {
-  Id?: string;
-  SyncToken?: string;
-  CompanyName?: string;
-  [key: string]: any;
-}
-
-export interface CompanyCurrency {
-  Id?: string;
-  Code?: string;
-  [key: string]: any;
-}
-
-export interface CreditMemo {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  BillEmail?: {
-    Address?: string;
-  };
-  [key: string]: any;
-}
-
-export interface Customer {
-  Id?: string;
-  SyncToken?: string;
-  DisplayName?: string;
-  CompanyName?: string;
-  GivenName?: string;
-  FamilyName?: string;
-  CurrencyRef?: Ref;
-  Email?: {
-    Address?: string;
-  };
-  [key: string]: any;
-}
-
-export interface CustomerType {
-  Id?: string;
-  Name?: string;
-  [key: string]: any;
-}
-
-export interface Department {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  Active?: boolean;
-  [key: string]: any;
-}
-
-export interface Deposit {
-  Id?: string;
-  SyncToken?: string;
-  DepositToAccountRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface Employee {
-  Id?: string;
-  SyncToken?: string;
-  DisplayName?: string;
-  GivenName?: string;
-  FamilyName?: string;
-  [key: string]: any;
-}
-
-export interface Estimate {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  BillEmail?: {
-    Address?: string;
-  };
-  [key: string]: any;
-}
-
-export interface Invoice {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  CurrencyRef?: Ref;
-  Line?: Array<{
-    Description?: string;
-    Amount?: number;
-    DetailType?: string;
-    SalesItemLineDetail?: {
-      ItemRef?: Ref;
-      ClassRef?: Ref;
-      UnitPrice?: number;
-      Qty?: number;
-      TaxCodeRef?: Ref;
-    };
-    [key: string]: any;
-  }>;
-  BillEmail?: {
-    Address?: string;
-  };
-  EmailStatus?: string;
-  PrivateNote?: string;
-  TxnDate?: string;
-  DueDate?: string;
-  DocNumber?: string;
-  TotalAmt?: number;
-  Balance?: number;
-  [key: string]: any;
-}
-
-export interface Item {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  Type?: string;
-  UnitPrice?: number;
-  doNotUpdateAccountOnTxns?: boolean;
-  [key: string]: any;
-}
-
-export interface JournalCode {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  Type?: string;
-  [key: string]: any;
-}
-
-export interface JournalEntry {
-  Id?: string;
-  SyncToken?: string;
-  Line?: Array<{
-    Id?: string;
-    Description?: string;
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface Payment {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  TotalAmt?: number;
-  void?: boolean;
-  sparse?: boolean;
-  [key: string]: any;
-}
-
-export interface PaymentMethod {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  Type?: string;
-  Active?: boolean;
-  [key: string]: any;
-}
-
-export interface Preferences {
-  Id?: string;
-  SyncToken?: string;
-  [key: string]: any;
-}
-
-export interface Purchase {
-  Id?: string;
-  SyncToken?: string;
-  AccountRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface PurchaseOrder {
-  Id?: string;
-  SyncToken?: string;
-  VendorRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  POEmail?: {
-    Address?: string;
-  };
-  [key: string]: any;
-}
-
-export interface RefundReceipt {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface SalesReceipt {
-  Id?: string;
-  SyncToken?: string;
-  CustomerRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  BillEmail?: {
-    Address?: string;
-  };
-  [key: string]: any;
-}
-
-export interface TaxAgency {
-  Id?: string;
-  SyncToken?: string;
-  DisplayName?: string;
-  [key: string]: any;
-}
-
-export interface TaxCode {
-  Id?: string;
-  Name?: string;
-  [key: string]: any;
-}
-
-export interface TaxRate {
-  Id?: string;
-  Name?: string;
-  [key: string]: any;
-}
-
-export interface Term {
-  Id?: string;
-  SyncToken?: string;
-  Name?: string;
-  [key: string]: any;
-}
-
-export interface TimeActivity {
-  Id?: string;
-  SyncToken?: string;
-  NameOf?: string;
-  EmployeeRef?: Ref;
-  [key: string]: any;
-}
-
-export interface Transfer {
-  Id?: string;
-  SyncToken?: string;
-  FromAccountRef?: Ref;
-  ToAccountRef?: Ref;
-  Amount?: number;
-  [key: string]: any;
-}
-
-export interface Vendor {
-  Id?: string;
-  SyncToken?: string;
-  DisplayName?: string;
-  CompanyName?: string;
-  [key: string]: any;
-}
-
-export interface VendorCredit {
-  Id?: string;
-  SyncToken?: string;
-  VendorRef?: Ref;
-  Line?: Array<{
-    Amount?: number;
-    DetailType?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
-}
-
-export interface ExchangeRate {
-  Id?: string;
-  SyncToken?: string;
-  SourceCurrencyCode?: string;
-  TargetCurrencyCode?: string;
-  Rate?: number;
-  AsOfDate?: string;
-  [key: string]: any;
-}
-
-export interface ReportOptions {
-  start_date?: string;
-  end_date?: string;
-  accounting_method?: string;
-  [key: string]: any;
-}
-
-// ============================================
-// MAIN QUICKBOOKS CLASS
-// ============================================
-
-export class QuickBooks {
+/** The CommonJS constructor exported by require('node-quickbooks'). */
+declare class QuickBooks {
   consumerKey: string;
   consumerSecret: string;
-  token: string;
-  tokenSecret: string | false;
-  realmId: string;
-  useSandbox: boolean;
-  debug?: boolean;
+  token: string | null;
+  tokenSecret: string | false | null | undefined;
+  realmId: string | null;
+  useSandbox: boolean | undefined;
+  debug: boolean | undefined;
   minorversion: number | string;
   oauthversion: string;
-  refreshToken?: string | null;
+  refreshToken: string | null;
   endpoint: string;
 
+  constructor(config: QuickBooks.Config);
   constructor(
     consumerKey: string,
     consumerSecret: string,
-    oauthToken: string,
-    oauthTokenSecret: string | false,
+    token: string,
+    tokenSecret: string,
     realmId: string,
     useSandbox: boolean,
     debug?: boolean,
-    minorversion?: string | null,
-    oauthversion?: string,
+    minorversion?: number | string | null,
+    oauthversion?: QuickBooks.OAuthVersion,
+    refreshToken?: string | null
+  );
+  constructor(
+    consumerKey: string,
+    consumerSecret: string,
+    token: string,
+    tokenSecret: string | false | null | undefined,
+    realmId: string,
+    useSandbox: boolean,
+    debug: boolean | undefined,
+    minorversion: number | string | null | undefined,
+    oauthversion: '2.0',
     refreshToken?: string | null
   );
 
-  // Static properties
   static APP_CENTER_BASE: string;
   static V3_ENDPOINT_BASE_URL: string;
   static QUERY_OPERATORS: string[];
   static TOKEN_URL: string;
   static REVOKE_URL: string;
-  static setOauthVersion(version: string | number, useSandbox?: boolean): void;
+  static REQUEST_TOKEN_URL: string;
+  static ACCESS_TOKEN_URL: string;
+  static APP_CENTER_URL: string;
+  static RECONNECT_URL: string;
+  static DISCONNECT_URL: string;
+  static AUTHORIZATION_URL: string | undefined;
+  static USER_INFO_URL: string | undefined;
+  static version: string;
+  static setOauthVersion(version: QuickBooks.OAuthVersion | 1 | 2, useSandbox?: boolean): void;
 
-  // OAuth methods
-  refreshAccessToken(callback: QuickBooksCallback<RefreshTokenResponse>): void;
-  revokeAccess(useRefresh: boolean, callback: QuickBooksCallback<any>): void;
-  getUserInfo(callback: QuickBooksCallback<any>): void;
-
-  // Connection methods
-  reconnect(callback: QuickBooksCallback<any>): void;
-  disconnect(callback: QuickBooksCallback<any>): void;
-
-  // Batch operations
-  batch(items: BatchItemRequest[], callback: QuickBooksCallback<any>): void;
-
-  // Change data capture
+  refreshAccessToken(callback?: QuickBooks.RefreshTokenCallback): void;
+  revokeAccess(useRefresh: boolean, callback?: QuickBooks.OAuthResponseCallback): void;
+  getUserInfo(callback: QuickBooks.QuickBooksCallback<Record<string, unknown>>): void;
+  reconnect(callback: QuickBooks.QuickBooksCallback<QuickBooks.ConnectionResponse>): void;
+  disconnect(callback: QuickBooks.QuickBooksCallback<QuickBooks.ConnectionResponse>): void;
+  batch(
+    items: QuickBooks.BatchItemRequest[],
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QuickBooksBatchResponse>
+  ): void;
   changeDataCapture(
     entities: string[] | string,
     since: Date | string,
-    callback: QuickBooksCallback<any>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.ChangeDataCaptureResponse>
   ): void;
 
-  // Upload
   upload(
     filename: string,
     contentType: string,
-    stream: any,
-    entityType?: string,
-    entityId?: string,
-    callback?: QuickBooksCallback<Attachable>
+    stream: Buffer | Readable,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Attachable>
+  ): void;
+  upload(
+    filename: string,
+    contentType: string,
+    stream: Buffer | Readable,
+    entityType: string,
+    entityId: string | number,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Attachable>
   ): void;
 
-  // Query
-  query(query: string, callback: QuickBooksCallback<any>): void;
-  findEntities(
-    entityType: string,
-    callback: QuickBooksCallback<QueryResponse<any>>
+  findEntities<K extends string>(
+    entityType: K,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<K>>
   ): void;
-  findEntities(
-    entityType: string,
-    criteria: QueryCriteria | QueryCriteria[] | string | undefined,
-    callback: QuickBooksCallback<QueryResponse<any>>
+  findEntities<K extends string>(
+    entityType: K,
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<K>>
   ): void;
-  findEntities(
-    entityType: string,
-    criteria: QueryCriteria | QueryCriteria[] | string | undefined,
-    opts: { qs?: Record<string, any>; headers?: Record<string, string> } | undefined,
-    callback: QuickBooksCallback<QueryResponse<any>>
+  findEntities<K extends string>(
+    entityType: K,
+    criteria: QuickBooks.QueryCriteria | undefined,
+    options: QuickBooks.QueryOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<K>>
   ): void;
 
-  // ============================================
-  // ACCOUNT METHODS
-  // ============================================
   createAccount(
-    account: Account,
-    callback: QuickBooksCallback<EntityResponse<Account>>
+    entity: QuickBooks.CreateAccountInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Account>
   ): void;
-  getAccount(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Account>>
-  ): void;
+  getAccount(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Account>): void;
   updateAccount(
-    account: Account,
-    callback: QuickBooksCallback<EntityResponse<Account>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Account>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Account>
   ): void;
   findAccounts(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Account>>,
-    callback?: QuickBooksCallback<QueryResponse<Account>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Account'>>
   ): void;
-
-  // ============================================
-  // ATTACHABLE METHODS
-  // ============================================
+  findAccounts(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Account'>>
+  ): void;
   createAttachable(
-    attachable: Attachable,
-    callback: QuickBooksCallback<EntityResponse<Attachable>>
+    entity: QuickBooks.CreateAttachableInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Attachable>
   ): void;
   getAttachable(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Attachable>>
+    id: string | number,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Attachable>
   ): void;
   updateAttachable(
-    attachable: Attachable,
-    callback: QuickBooksCallback<EntityResponse<Attachable>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Attachable, string | number>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Attachable>
   ): void;
   deleteAttachable(
-    idOrEntity: string | Attachable,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | number | QuickBooks.EntityVersion<string | number>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Attachable'>>
   ): void;
   findAttachables(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Attachable>>,
-    callback?: QuickBooksCallback<QueryResponse<Attachable>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Attachable'>>
   ): void;
-
-  // ============================================
-  // BILL METHODS
-  // ============================================
+  findAttachables(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Attachable'>>
+  ): void;
   createBill(
-    bill: Bill,
-    callback: QuickBooksCallback<EntityResponse<Bill>>
+    entity: QuickBooks.CreateBillInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Bill>
   ): void;
-  getBill(id: string, callback: QuickBooksCallback<EntityResponse<Bill>>): void;
+  getBill(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Bill>): void;
   updateBill(
-    bill: Bill,
-    callback: QuickBooksCallback<EntityResponse<Bill>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Bill>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Bill>
   ): void;
   deleteBill(
-    idOrEntity: string | Bill,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Bill'>>
   ): void;
+  findBills(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Bill'>>): void;
   findBills(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Bill>>,
-    callback?: QuickBooksCallback<QueryResponse<Bill>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Bill'>>
   ): void;
-
-  // ============================================
-  // BILL PAYMENT METHODS
-  // ============================================
   createBillPayment(
-    billPayment: BillPayment,
-    callback: QuickBooksCallback<EntityResponse<BillPayment>>
+    entity: QuickBooks.CreateBillPaymentInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.BillPayment>
   ): void;
-  getBillPayment(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<BillPayment>>
-  ): void;
+  getBillPayment(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.BillPayment>): void;
   updateBillPayment(
-    billPayment: BillPayment,
-    callback: QuickBooksCallback<EntityResponse<BillPayment>>
+    entity: QuickBooks.UpdateInput<QuickBooks.BillPayment>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.BillPayment>
   ): void;
   deleteBillPayment(
-    idOrEntity: string | BillPayment,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'BillPayment'>>
   ): void;
   findBillPayments(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<BillPayment>>,
-    callback?: QuickBooksCallback<QueryResponse<BillPayment>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'BillPayment'>>
   ): void;
-
-  // ============================================
-  // BUDGET METHODS
-  // ============================================
+  findBillPayments(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'BillPayment'>>
+  ): void;
+  findBudgets(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Budget'>>): void;
   findBudgets(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Budget>>,
-    callback?: QuickBooksCallback<QueryResponse<Budget>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Budget'>>
   ): void;
-
-  // ============================================
-  // CLASS METHODS
-  // ============================================
   createClass(
-    klass: Class,
-    callback: QuickBooksCallback<EntityResponse<Class>>
+    entity: QuickBooks.CreateClassInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Class>
   ): void;
-  getClass(id: string, callback: QuickBooksCallback<EntityResponse<Class>>): void;
+  getClass(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Class>): void;
   updateClass(
-    klass: Class,
-    callback: QuickBooksCallback<EntityResponse<Class>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Class>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Class>
   ): void;
+  findClasses(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Class'>>): void;
   findClasses(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Class>>,
-    callback?: QuickBooksCallback<QueryResponse<Class>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Class'>>
   ): void;
-
-  // ============================================
-  // COMPANY INFO METHODS
-  // ============================================
-  getCompanyInfo(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<CompanyInfo>>
-  ): void;
+  getCompanyInfo(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.CompanyInfo>): void;
   updateCompanyInfo(
-    companyInfo: CompanyInfo,
-    callback: QuickBooksCallback<EntityResponse<CompanyInfo>>
+    entity: QuickBooks.UpdateInput<QuickBooks.CompanyInfo>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CompanyInfo>
   ): void;
   findCompanyInfos(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<CompanyInfo>>,
-    callback?: QuickBooksCallback<QueryResponse<CompanyInfo>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CompanyInfo'>>
   ): void;
-
-  // ============================================
-  // COMPANY CURRENCY METHODS
-  // ============================================
+  findCompanyInfos(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CompanyInfo'>>
+  ): void;
   getCompanyCurrency(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<CompanyCurrency>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CompanyCurrency>
   ): void;
   findCompanyCurrencies(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<CompanyCurrency>>,
-    callback?: QuickBooksCallback<QueryResponse<CompanyCurrency>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CompanyCurrency'>>
   ): void;
-
-  // ============================================
-  // CREDIT MEMO METHODS
-  // ============================================
+  findCompanyCurrencies(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CompanyCurrency'>>
+  ): void;
   createCreditMemo(
-    creditMemo: CreditMemo,
-    callback: QuickBooksCallback<EntityResponse<CreditMemo>>
+    entity: QuickBooks.CreateCreditMemoInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CreditMemo>
   ): void;
-  getCreditMemo(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<CreditMemo>>
-  ): void;
+  getCreditMemo(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.CreditMemo>): void;
   updateCreditMemo(
-    creditMemo: CreditMemo,
-    callback: QuickBooksCallback<EntityResponse<CreditMemo>>
+    entity: QuickBooks.UpdateInput<QuickBooks.CreditMemo>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CreditMemo>
   ): void;
   deleteCreditMemo(
-    idOrEntity: string | CreditMemo,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'CreditMemo'>>
   ): void;
-  getCreditMemoPdf(
+  getCreditMemoPdf(id: string, callback: QuickBooks.QuickBooksCallback<Buffer>): void;
+  sendCreditMemoPdf(
     id: string,
-    callback: QuickBooksCallback<any>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CreditMemo>
   ): void;
   sendCreditMemoPdf(
     id: string,
-    sendTo?: string,
-    callback?: QuickBooksCallback<any>
+    sendTo: string | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CreditMemo>
   ): void;
   findCreditMemos(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<CreditMemo>>,
-    callback?: QuickBooksCallback<QueryResponse<CreditMemo>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CreditMemo'>>
   ): void;
-
-  // ============================================
-  // CUSTOMER METHODS
-  // ============================================
+  findCreditMemos(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CreditMemo'>>
+  ): void;
   createCustomer(
-    customer: Customer,
-    callback: QuickBooksCallback<EntityResponse<Customer>>
+    entity: QuickBooks.CreateCustomerInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Customer>
   ): void;
-  getCustomer(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Customer>>
-  ): void;
+  getCustomer(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Customer>): void;
   updateCustomer(
-    customer: Customer,
-    callback: QuickBooksCallback<EntityResponse<Customer>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Customer>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Customer>
   ): void;
   findCustomers(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Customer>>,
-    callback?: QuickBooksCallback<QueryResponse<Customer>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Customer'>>
   ): void;
-
-  // ============================================
-  // CUSTOMER TYPE METHODS
-  // ============================================
+  findCustomers(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Customer'>>
+  ): void;
   getCustomerType(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<CustomerType>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.CustomerType>
   ): void;
   findCustomerTypes(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<CustomerType>>,
-    callback?: QuickBooksCallback<QueryResponse<CustomerType>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CustomerType'>>
   ): void;
-
-  // ============================================
-  // DEPARTMENT METHODS
-  // ============================================
+  findCustomerTypes(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'CustomerType'>>
+  ): void;
   createDepartment(
-    department: Department,
-    callback: QuickBooksCallback<EntityResponse<Department>>
+    entity: QuickBooks.CreateDepartmentInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Department>
   ): void;
-  getDepartment(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Department>>
-  ): void;
+  getDepartment(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Department>): void;
   updateDepartment(
-    department: Department,
-    callback: QuickBooksCallback<EntityResponse<Department>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Department>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Department>
   ): void;
   findDepartments(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Department>>,
-    callback?: QuickBooksCallback<QueryResponse<Department>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Department'>>
   ): void;
-
-  // ============================================
-  // DEPOSIT METHODS
-  // ============================================
+  findDepartments(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Department'>>
+  ): void;
   createDeposit(
-    deposit: Deposit,
-    callback: QuickBooksCallback<EntityResponse<Deposit>>
+    entity: QuickBooks.CreateDepositInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Deposit>
   ): void;
-  getDeposit(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Deposit>>
-  ): void;
+  getDeposit(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Deposit>): void;
   updateDeposit(
-    deposit: Deposit,
-    callback: QuickBooksCallback<EntityResponse<Deposit>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Deposit>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Deposit>
   ): void;
   deleteDeposit(
-    idOrEntity: string | Deposit,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Deposit'>>
   ): void;
   findDeposits(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Deposit>>,
-    callback?: QuickBooksCallback<QueryResponse<Deposit>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Deposit'>>
   ): void;
-
-  // ============================================
-  // EMPLOYEE METHODS
-  // ============================================
+  findDeposits(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Deposit'>>
+  ): void;
   createEmployee(
-    employee: Employee,
-    callback: QuickBooksCallback<EntityResponse<Employee>>
+    entity: QuickBooks.CreateEmployeeInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Employee>
   ): void;
-  getEmployee(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Employee>>
-  ): void;
+  getEmployee(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Employee>): void;
   updateEmployee(
-    employee: Employee,
-    callback: QuickBooksCallback<EntityResponse<Employee>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Employee>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Employee>
   ): void;
   findEmployees(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Employee>>,
-    callback?: QuickBooksCallback<QueryResponse<Employee>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Employee'>>
   ): void;
-
-  // ============================================
-  // ESTIMATE METHODS
-  // ============================================
+  findEmployees(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Employee'>>
+  ): void;
   createEstimate(
-    estimate: Estimate,
-    callback: QuickBooksCallback<EntityResponse<Estimate>>
+    entity: QuickBooks.CreateEstimateInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Estimate>
   ): void;
-  getEstimate(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Estimate>>
-  ): void;
+  getEstimate(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Estimate>): void;
   updateEstimate(
-    estimate: Estimate,
-    callback: QuickBooksCallback<EntityResponse<Estimate>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Estimate>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Estimate>
   ): void;
   deleteEstimate(
-    idOrEntity: string | Estimate,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Estimate'>>
   ): void;
-  getEstimatePdf(
-    id: string,
-    callback: QuickBooksCallback<any>
-  ): void;
+  getEstimatePdf(id: string, callback: QuickBooks.QuickBooksCallback<Buffer>): void;
+  sendEstimatePdf(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Estimate>): void;
   sendEstimatePdf(
     id: string,
-    callback: QuickBooksCallback<any>
-  ): void;
-  sendEstimatePdf(
-    id: string,
-    sendTo?: string,
-    callback?: QuickBooksCallback<any>,
+    sendTo: string | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Estimate>,
     requestId?: string
   ): void;
   findEstimates(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Estimate>>,
-    callback?: QuickBooksCallback<QueryResponse<Estimate>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Estimate'>>
   ): void;
-
-  // ============================================
-  // EXCHANGE RATE METHODS
-  // ============================================
+  findEstimates(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Estimate'>>
+  ): void;
   getExchangeRate(
     options: { sourcecurrencycode: string; asofdate?: string },
-    callback: QuickBooksCallback<EntityResponse<ExchangeRate>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.ExchangeRate>
   ): void;
   updateExchangeRate(
-    exchangeRate: ExchangeRate,
-    callback: QuickBooksCallback<EntityResponse<ExchangeRate>>
+    exchangeRate: QuickBooks.ExchangeRateInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.ExchangeRate>
   ): void;
   findExchangeRates(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<ExchangeRate>>,
-    callback?: QuickBooksCallback<QueryResponse<ExchangeRate>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'ExchangeRate'>>
   ): void;
-
-  // ============================================
-  // INVOICE METHODS
-  // ============================================
+  findExchangeRates(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'ExchangeRate'>>
+  ): void;
   createInvoice(
-    invoice: Invoice,
-    callback: QuickBooksCallback<EntityResponse<Invoice>>
+    entity: QuickBooks.CreateInvoiceInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Invoice>
   ): void;
-  getInvoice(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Invoice>>
-  ): void;
+  getInvoice(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Invoice>): void;
   updateInvoice(
-    invoice: Invoice,
-    callback: QuickBooksCallback<EntityResponse<Invoice>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Invoice>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Invoice>
   ): void;
   deleteInvoice(
-    idOrEntity: string | Invoice,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Invoice'>>
   ): void;
   voidInvoice(
-    idOrEntity: string | Invoice,
-    callback: QuickBooksCallback<EntityResponse<Invoice>>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.EntityResponseFor<'Invoice'>>
   ): void;
-  getInvoicePdf(id: string, callback: QuickBooksCallback<any>): void;
+  getInvoicePdf(id: string, callback: QuickBooks.QuickBooksCallback<Buffer>): void;
+  sendInvoicePdf(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Invoice>): void;
   sendInvoicePdf(
     id: string,
-    callback: QuickBooksCallback<any>
-  ): void;
-  sendInvoicePdf(
-    id: string,
-    sendTo?: string,
-    callback?: QuickBooksCallback<any>,
+    sendTo: string | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Invoice>,
     requestId?: string
   ): void;
   findInvoices(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Invoice>>,
-    callback?: QuickBooksCallback<QueryResponse<Invoice>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Invoice'>>
   ): void;
-
-  // ============================================
-  // ITEM METHODS
-  // ============================================
+  findInvoices(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Invoice'>>
+  ): void;
   createItem(
-    item: Item,
-    callback: QuickBooksCallback<EntityResponse<Item>>
+    entity: QuickBooks.CreateItemInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Item>
   ): void;
-  getItem(id: string, callback: QuickBooksCallback<EntityResponse<Item>>): void;
+  getItem(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Item>): void;
   updateItem(
-    item: Item,
-    callback: QuickBooksCallback<EntityResponse<Item>>
+    entity: QuickBooks.UpdateItemInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Item>
   ): void;
+  findItems(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Item'>>): void;
   findItems(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Item>>,
-    callback?: QuickBooksCallback<QueryResponse<Item>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Item'>>
   ): void;
-
-  // ============================================
-  // JOURNAL CODE METHODS
-  // ============================================
   createJournalCode(
-    journalCode: JournalCode,
-    callback: QuickBooksCallback<EntityResponse<JournalCode>>
+    entity: QuickBooks.CreateJournalCodeInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalCode>
   ): void;
-  getJournalCode(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<JournalCode>>
-  ): void;
+  getJournalCode(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalCode>): void;
   updateJournalCode(
-    journalCode: JournalCode,
-    callback: QuickBooksCallback<EntityResponse<JournalCode>>
+    entity: QuickBooks.UpdateInput<QuickBooks.JournalCode>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalCode>
   ): void;
   deleteJournalCode(
-    idOrEntity: string | JournalCode,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'JournalCode'>>
   ): void;
   findJournalCodes(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<JournalCode>>,
-    callback?: QuickBooksCallback<QueryResponse<JournalCode>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'JournalCode'>>
   ): void;
-
-  // ============================================
-  // JOURNAL ENTRY METHODS
-  // ============================================
+  findJournalCodes(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'JournalCode'>>
+  ): void;
   createJournalEntry(
-    journalEntry: JournalEntry,
-    callback: QuickBooksCallback<EntityResponse<JournalEntry>>
+    entity: QuickBooks.CreateJournalEntryInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalEntry>
   ): void;
   getJournalEntry(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<JournalEntry>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalEntry>
   ): void;
   updateJournalEntry(
-    journalEntry: JournalEntry,
-    callback: QuickBooksCallback<EntityResponse<JournalEntry>>
+    entity: QuickBooks.UpdateInput<QuickBooks.JournalEntry>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.JournalEntry>
   ): void;
   deleteJournalEntry(
-    idOrEntity: string | JournalEntry,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'JournalEntry'>>
   ): void;
   findJournalEntries(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<JournalEntry>>,
-    callback?: QuickBooksCallback<QueryResponse<JournalEntry>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'JournalEntry'>>
   ): void;
-
-  // ============================================
-  // PAYMENT METHODS
-  // ============================================
+  findJournalEntries(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'JournalEntry'>>
+  ): void;
   createPayment(
-    payment: Payment,
-    callback: QuickBooksCallback<EntityResponse<Payment>>
+    entity: QuickBooks.CreatePaymentInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Payment>
   ): void;
-  getPayment(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Payment>>
-  ): void;
+  getPayment(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Payment>): void;
   updatePayment(
-    payment: Payment,
-    callback: QuickBooksCallback<EntityResponse<Payment>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Payment>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Payment>
   ): void;
   deletePayment(
-    idOrEntity: string | Payment,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Payment'>>
   ): void;
   voidPayment(
-    payment: Payment,
-    callback: QuickBooksCallback<EntityResponse<Payment>>
+    payment: QuickBooks.UpdateInput<QuickBooks.Payment>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Payment>
   ): void;
   findPayments(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Payment>>,
-    callback?: QuickBooksCallback<QueryResponse<Payment>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Payment'>>
   ): void;
-
-  // ============================================
-  // PAYMENT METHOD METHODS
-  // ============================================
+  findPayments(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Payment'>>
+  ): void;
   createPaymentMethod(
-    paymentMethod: PaymentMethod,
-    callback: QuickBooksCallback<EntityResponse<PaymentMethod>>
+    entity: QuickBooks.CreatePaymentMethodInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PaymentMethod>
   ): void;
   getPaymentMethod(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<PaymentMethod>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PaymentMethod>
   ): void;
   updatePaymentMethod(
-    paymentMethod: PaymentMethod,
-    callback: QuickBooksCallback<EntityResponse<PaymentMethod>>
+    entity: QuickBooks.UpdateInput<QuickBooks.PaymentMethod>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PaymentMethod>
   ): void;
   findPaymentMethods(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<PaymentMethod>>,
-    callback?: QuickBooksCallback<QueryResponse<PaymentMethod>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'PaymentMethod'>>
   ): void;
-
-  // ============================================
-  // PREFERENCES METHODS
-  // ============================================
-  getPreferences(
-    callback: QuickBooksCallback<EntityResponse<Preferences>>
+  findPaymentMethods(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'PaymentMethod'>>
   ): void;
+  getPreferences(callback: QuickBooks.QuickBooksCallback<QuickBooks.Preferences>): void;
   updatePreferences(
-    preferences: Preferences,
-    callback: QuickBooksCallback<EntityResponse<Preferences>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Preferences>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Preferences>
   ): void;
   findPreferenceses(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Preferences>>,
-    callback?: QuickBooksCallback<QueryResponse<Preferences>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Preferences'>>
   ): void;
-
-  // ============================================
-  // PURCHASE METHODS
-  // ============================================
+  findPreferenceses(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Preferences'>>
+  ): void;
   createPurchase(
-    purchase: Purchase,
-    callback: QuickBooksCallback<EntityResponse<Purchase>>
+    entity: QuickBooks.CreatePurchaseInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Purchase>
   ): void;
-  getPurchase(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Purchase>>
-  ): void;
+  getPurchase(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Purchase>): void;
   updatePurchase(
-    purchase: Purchase,
-    callback: QuickBooksCallback<EntityResponse<Purchase>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Purchase>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Purchase>
   ): void;
   deletePurchase(
-    idOrEntity: string | Purchase,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Purchase'>>
   ): void;
   findPurchases(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Purchase>>,
-    callback?: QuickBooksCallback<QueryResponse<Purchase>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Purchase'>>
   ): void;
-
-  // ============================================
-  // PURCHASE ORDER METHODS
-  // ============================================
+  findPurchases(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Purchase'>>
+  ): void;
   createPurchaseOrder(
-    purchaseOrder: PurchaseOrder,
-    callback: QuickBooksCallback<EntityResponse<PurchaseOrder>>
+    entity: QuickBooks.CreatePurchaseOrderInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PurchaseOrder>
   ): void;
   getPurchaseOrder(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<PurchaseOrder>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PurchaseOrder>
   ): void;
   updatePurchaseOrder(
-    purchaseOrder: PurchaseOrder,
-    callback: QuickBooksCallback<EntityResponse<PurchaseOrder>>
+    entity: QuickBooks.UpdateInput<QuickBooks.PurchaseOrder>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PurchaseOrder>
   ): void;
   deletePurchaseOrder(
-    idOrEntity: string | PurchaseOrder,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'PurchaseOrder'>>
   ): void;
   sendPurchaseOrder(
     id: string,
-    sendTo?: string,
-    callback?: QuickBooksCallback<any>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PurchaseOrder>
+  ): void;
+  sendPurchaseOrder(
+    id: string,
+    sendTo: string | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.PurchaseOrder>
   ): void;
   findPurchaseOrders(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<PurchaseOrder>>,
-    callback?: QuickBooksCallback<QueryResponse<PurchaseOrder>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'PurchaseOrder'>>
   ): void;
-
-  // ============================================
-  // REFUND RECEIPT METHODS
-  // ============================================
+  findPurchaseOrders(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'PurchaseOrder'>>
+  ): void;
   createRefundReceipt(
-    refundReceipt: RefundReceipt,
-    callback: QuickBooksCallback<EntityResponse<RefundReceipt>>
+    entity: QuickBooks.CreateRefundReceiptInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.RefundReceipt>
   ): void;
   getRefundReceipt(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<RefundReceipt>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.RefundReceipt>
   ): void;
   updateRefundReceipt(
-    refundReceipt: RefundReceipt,
-    callback: QuickBooksCallback<EntityResponse<RefundReceipt>>
+    entity: QuickBooks.UpdateInput<QuickBooks.RefundReceipt>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.RefundReceipt>
   ): void;
   deleteRefundReceipt(
-    idOrEntity: string | RefundReceipt,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'RefundReceipt'>>
   ): void;
   findRefundReceipts(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<RefundReceipt>>,
-    callback?: QuickBooksCallback<QueryResponse<RefundReceipt>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'RefundReceipt'>>
   ): void;
-
-  // ============================================
-  // SALES RECEIPT METHODS
-  // ============================================
+  findRefundReceipts(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'RefundReceipt'>>
+  ): void;
   createSalesReceipt(
-    salesReceipt: SalesReceipt,
-    callback: QuickBooksCallback<EntityResponse<SalesReceipt>>
+    entity: QuickBooks.CreateSalesReceiptInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.SalesReceipt>
   ): void;
   getSalesReceipt(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<SalesReceipt>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.SalesReceipt>
   ): void;
   updateSalesReceipt(
-    salesReceipt: SalesReceipt,
-    callback: QuickBooksCallback<EntityResponse<SalesReceipt>>
+    entity: QuickBooks.UpdateInput<QuickBooks.SalesReceipt>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.SalesReceipt>
   ): void;
   deleteSalesReceipt(
-    idOrEntity: string | SalesReceipt,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'SalesReceipt'>>
   ): void;
-  getSalesReceiptPdf(
+  getSalesReceiptPdf(id: string, callback: QuickBooks.QuickBooksCallback<Buffer>): void;
+  sendSalesReceiptPdf(
     id: string,
-    callback: QuickBooksCallback<any>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.SalesReceipt>
   ): void;
   sendSalesReceiptPdf(
     id: string,
-    sendTo?: string,
-    callback?: QuickBooksCallback<any>
+    sendTo: string | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.SalesReceipt>
   ): void;
   findSalesReceipts(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<SalesReceipt>>,
-    callback?: QuickBooksCallback<QueryResponse<SalesReceipt>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'SalesReceipt'>>
   ): void;
-
-  // ============================================
-  // TAX AGENCY METHODS
-  // ============================================
+  findSalesReceipts(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'SalesReceipt'>>
+  ): void;
   createTaxAgency(
-    taxAgency: TaxAgency,
-    callback: QuickBooksCallback<EntityResponse<TaxAgency>>
+    entity: QuickBooks.CreateTaxAgencyInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxAgency>
   ): void;
-  getTaxAgency(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<TaxAgency>>
-  ): void;
+  getTaxAgency(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxAgency>): void;
   updateTaxAgency(
-    taxAgency: TaxAgency,
-    callback: QuickBooksCallback<EntityResponse<TaxAgency>>
+    entity: QuickBooks.UpdateInput<QuickBooks.TaxAgency>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxAgency>
   ): void;
   findTaxAgencies(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<TaxAgency>>,
-    callback?: QuickBooksCallback<QueryResponse<TaxAgency>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxAgency'>>
   ): void;
-
-  // ============================================
-  // TAX CODE METHODS
-  // ============================================
-  getTaxCode(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<TaxCode>>
+  findTaxAgencies(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxAgency'>>
   ): void;
+  getTaxCode(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxCode>): void;
   updateTaxCode(
-    taxCode: TaxCode,
-    callback: QuickBooksCallback<EntityResponse<TaxCode>>
+    entity: QuickBooks.UpdateInput<QuickBooks.TaxCode>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxCode>
   ): void;
   findTaxCodes(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<TaxCode>>,
-    callback?: QuickBooksCallback<QueryResponse<TaxCode>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxCode'>>
   ): void;
-
-  // ============================================
-  // TAX RATE METHODS
-  // ============================================
-  getTaxRate(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<TaxRate>>
+  findTaxCodes(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxCode'>>
   ): void;
+  getTaxRate(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxRate>): void;
   updateTaxRate(
-    taxRate: TaxRate,
-    callback: QuickBooksCallback<EntityResponse<TaxRate>>
+    entity: QuickBooks.UpdateInput<QuickBooks.TaxRate>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TaxRate>
   ): void;
   findTaxRates(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<TaxRate>>,
-    callback?: QuickBooksCallback<QueryResponse<TaxRate>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxRate'>>
   ): void;
-
-  // ============================================
-  // TAX SERVICE METHODS
-  // ============================================
+  findTaxRates(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TaxRate'>>
+  ): void;
   createTaxService(
-    taxService: any,
-    callback: QuickBooksCallback<any>
+    taxService: Record<string, unknown>,
+    callback: QuickBooks.QuickBooksCallback<Record<string, unknown>>
   ): void;
-
-  // ============================================
-  // TERM METHODS
-  // ============================================
   createTerm(
-    term: Term,
-    callback: QuickBooksCallback<EntityResponse<Term>>
+    entity: QuickBooks.CreateTermInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Term>
   ): void;
-  getTerm(id: string, callback: QuickBooksCallback<EntityResponse<Term>>): void;
+  getTerm(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Term>): void;
   updateTerm(
-    term: Term,
-    callback: QuickBooksCallback<EntityResponse<Term>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Term>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Term>
   ): void;
+  findTerms(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Term'>>): void;
   findTerms(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Term>>,
-    callback?: QuickBooksCallback<QueryResponse<Term>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Term'>>
   ): void;
-
-  // ============================================
-  // TIME ACTIVITY METHODS
-  // ============================================
   createTimeActivity(
-    timeActivity: TimeActivity,
-    callback: QuickBooksCallback<EntityResponse<TimeActivity>>
+    entity: QuickBooks.CreateTimeActivityInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TimeActivity>
   ): void;
   getTimeActivity(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<TimeActivity>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TimeActivity>
   ): void;
   updateTimeActivity(
-    timeActivity: TimeActivity,
-    callback: QuickBooksCallback<EntityResponse<TimeActivity>>
+    entity: QuickBooks.UpdateInput<QuickBooks.TimeActivity>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.TimeActivity>
   ): void;
   deleteTimeActivity(
-    idOrEntity: string | TimeActivity,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'TimeActivity'>>
   ): void;
   findTimeActivities(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<TimeActivity>>,
-    callback?: QuickBooksCallback<QueryResponse<TimeActivity>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TimeActivity'>>
   ): void;
-
-  // ============================================
-  // TRANSFER METHODS
-  // ============================================
+  findTimeActivities(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'TimeActivity'>>
+  ): void;
   createTransfer(
-    transfer: Transfer,
-    callback: QuickBooksCallback<EntityResponse<Transfer>>
+    entity: QuickBooks.CreateTransferInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Transfer>
   ): void;
-  getTransfer(
-    id: string,
-    callback: QuickBooksCallback<EntityResponse<Transfer>>
-  ): void;
+  getTransfer(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Transfer>): void;
   updateTransfer(
-    transfer: Transfer,
-    callback: QuickBooksCallback<EntityResponse<Transfer>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Transfer>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Transfer>
   ): void;
   deleteTransfer(
-    idOrEntity: string | Transfer,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'Transfer'>>
   ): void;
   findTransfers(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Transfer>>,
-    callback?: QuickBooksCallback<QueryResponse<Transfer>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Transfer'>>
   ): void;
-
-  // ============================================
-  // VENDOR METHODS
-  // ============================================
+  findTransfers(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Transfer'>>
+  ): void;
   createVendor(
-    vendor: Vendor,
-    callback: QuickBooksCallback<EntityResponse<Vendor>>
+    entity: QuickBooks.CreateVendorInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Vendor>
   ): void;
-  getVendor(id: string, callback: QuickBooksCallback<EntityResponse<Vendor>>): void;
+  getVendor(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Vendor>): void;
   updateVendor(
-    vendor: Vendor,
-    callback: QuickBooksCallback<EntityResponse<Vendor>>
+    entity: QuickBooks.UpdateInput<QuickBooks.Vendor>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Vendor>
   ): void;
+  findVendors(callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Vendor'>>): void;
   findVendors(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<Vendor>>,
-    callback?: QuickBooksCallback<QueryResponse<Vendor>>
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'Vendor'>>
   ): void;
-
-  // ============================================
-  // VENDOR CREDIT METHODS
-  // ============================================
   createVendorCredit(
-    vendorCredit: VendorCredit,
-    callback: QuickBooksCallback<EntityResponse<VendorCredit>>
+    entity: QuickBooks.CreateVendorCreditInput,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.VendorCredit>
   ): void;
   getVendorCredit(
     id: string,
-    callback: QuickBooksCallback<EntityResponse<VendorCredit>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.VendorCredit>
   ): void;
   updateVendorCredit(
-    vendorCredit: VendorCredit,
-    callback: QuickBooksCallback<EntityResponse<VendorCredit>>
+    entity: QuickBooks.UpdateInput<QuickBooks.VendorCredit>,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.VendorCredit>
   ): void;
   deleteVendorCredit(
-    idOrEntity: string | VendorCredit,
-    callback: QuickBooksCallback<any>
+    idOrEntity: string | QuickBooks.EntityVersion,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.DeleteResponse<'VendorCredit'>>
   ): void;
   findVendorCredits(
-    criteria: QueryCriteria | QuickBooksCallback<QueryResponse<VendorCredit>>,
-    callback?: QuickBooksCallback<QueryResponse<VendorCredit>>
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'VendorCredit'>>
   ): void;
-
-  // ============================================
-  // REPORTS METHODS
-  // ============================================
-  getReports(
-    id: string,
-    callback: QuickBooksCallback<any>
+  findVendorCredits(
+    criteria: QuickBooks.QueryCriteria | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.QueryResponseFor<'VendorCredit'>>
   ): void;
+  getReports(id: string, callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
+  reportBalanceSheet(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportBalanceSheet(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportProfitAndLoss(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportProfitAndLoss(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportProfitAndLossDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportProfitAndLossDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTrialBalance(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTrialBalance(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTrialBalanceFR(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTrialBalanceFR(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportCashFlow(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportCashFlow(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportInventoryValuationSummary(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportInventoryValuationSummary(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportCustomerSales(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportCustomerSales(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportItemSales(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportItemSales(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportCustomerIncome(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportCustomerIncome(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportCustomerBalance(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportCustomerBalance(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportCustomerBalanceDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportCustomerBalanceDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportAgedReceivables(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportAgedReceivables(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportAgedReceivableDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportAgedReceivableDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportVendorBalance(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportVendorBalance(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportVendorBalanceDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportVendorBalanceDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportAgedPayables(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportAgedPayables(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportAgedPayableDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportAgedPayableDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportVendorExpenses(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportVendorExpenses(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTransactionList(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTransactionList(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTransactionListWithSplits(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTransactionListWithSplits(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTransactionListByCustomer(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTransactionListByCustomer(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTransactionListByVendor(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTransactionListByVendor(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportGeneralLedgerDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportGeneralLedgerDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportTaxSummary(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportTaxSummary(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportDepartmentSales(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportDepartmentSales(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportClassSales(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportClassSales(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportAccountListDetail(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportAccountListDetail(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
+  reportJournalReport(callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>): void;
   reportJournalReport(
-    options: ReportOptions | QuickBooksCallback<any>,
-    callback?: QuickBooksCallback<any>
+    options: QuickBooks.ReportOptions | undefined,
+    callback: QuickBooks.QuickBooksCallback<QuickBooks.Report>
   ): void;
-
-  // Utility methods
   capitalize(s: string): string;
   pluralize(s: string): string;
 }
 
-export default QuickBooks;
+declare namespace QuickBooks {
+  export type Country2 = string;
+
+  export type EstimateStatusOption = 'Accepted' | 'Closed' | 'Pending' | 'Rejected' | 'Converted';
+
+  export type QuickBooksItemType = 'Inventory' | 'NonInventory' | 'Service' | 'Category' | 'Group';
+
+  export type QuickBooksItemCategoryType = 'Product' | 'Service';
+
+  export type QuickBooksAccountType =
+    | 'Bank'
+    | 'Accounts Receivable'
+    | 'Other Current Asset'
+    | 'Fixed Asset'
+    | 'Other Asset'
+    | 'Accounts Payable'
+    | 'Credit Card'
+    | 'Other Current Liability'
+    | 'Long Term Liability'
+    | 'Equity'
+    | 'Income'
+    | 'Cost of Goods Sold'
+    | 'Expense'
+    | 'Other Income'
+    | 'Other Expense';
+
+  export type QuickBooksAccountSubType = string;
+
+  export type NameValuePair = {
+    name?: string;
+    value: string;
+    type?: string;
+  };
+
+  export type ValueHolder = {
+    value: string;
+  };
+
+  export interface QuickBooksRestEntity {
+    readonly Id: string;
+    SyncToken?: string;
+    MetaData?: MetaData;
+    domain?: string;
+    sparse?: boolean;
+  }
+
+  export interface QuickBooksAttachable {
+    Id: string | number;
+    /** The default XML parser converts numeric upload values to numbers. */
+    SyncToken?: string | number;
+    AttachableRef?: Array<{
+      EntityRef?: {
+        type?: string;
+        value?: string;
+      };
+    }>;
+    FileName?: string;
+    Size?: number;
+    TempDownloadUri?: string;
+    FileAccessUri?: string;
+    ContentType?: string;
+    Note?: string;
+  }
+
+  export interface QuickBooksAddress {
+    Id?: string;
+    City?: string;
+    Line1?: string;
+    Line2?: string;
+    Line3?: string;
+    Line4?: string;
+    Line5?: string;
+    PostalCode?: string;
+    CountrySubDivisionCode?: string; //state
+    Country?: string;
+  }
+
+  export interface QuickBooksAccount extends QuickBooksRestEntity {
+    Name: string;
+    AcctNum?: string;
+    Description?: string;
+    SubAccount?: boolean;
+    ParentRef?: Ref;
+    FullyQualifiedName?: string;
+    Active?: boolean;
+    Classification?: 'Asset' | 'Equity' | 'Expense' | 'Liability' | 'Revenue';
+    AccountType: QuickBooksAccountType;
+    AccountSubType?: QuickBooksAccountSubType;
+    CurrentBalance?: number;
+    CurrentBalanceWithSubAccounts?: number;
+    CurrencyRef?: Ref;
+    OnlineBankingEnabled?: boolean;
+    FIName?: string;
+    OpeningBalance?: number;
+    OpeningBalanceDate?: string;
+    SyncToken: string;
+    MetaData?: MetaData;
+  }
+
+  export interface QuickBooksCustomer extends QuickBooksRestEntity {
+    DisplayName: string;
+    FullyQualifiedName: string;
+    Active?: boolean;
+    PrimaryEmailAddr?: {
+      Address?: string;
+    };
+    PrimaryPhone?: {
+      FreeFormNumber?: string;
+    };
+    CurrencyRef?: NameValuePair;
+    BillAddr?: QuickBooksAddress;
+    ShipAddr?: QuickBooksAddress;
+    DefaultTaxCodeRef?: NameValuePair;
+    Taxable?: boolean;
+    Balance?: number;
+    Job?: boolean;
+    IsProject?: boolean;
+    ParentRef?: NameValuePair | ValueHolder; // This is defined as a NameValuePair in the docs, but in practice the name is not always available.
+    readonly BalanceWithJobs?: number;
+    readonly SyncToken: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+    GivenName?: string;
+    Title?: string;
+    MiddleName?: string;
+    Suffix?: string;
+    FamilyName?: string;
+    CompanyName?: string;
+    Notes?: string;
+    PrintOnCheckName?: string;
+    ResaleNum?: string;
+    PrimaryTaxIdentifier?: string;
+    SecondaryTaxIdentifier?: string;
+    PreferredDeliveryMethod?: string;
+    TaxExemptionReasonId?: number;
+    AlternatePhone?: { FreeFormNumber?: string };
+    OpenBalanceDate?: string;
+    Mobile?: {
+      FreeFormNumber?: string;
+    };
+    Fax?: {
+      FreeFormNumber?: string;
+    };
+    WebAddr?: {
+      URI?: string;
+    };
+    SalesTermRef?: NameValuePair;
+  }
+
+  export interface QuickBooksVendor extends QuickBooksRestEntity {
+    DisplayName: string;
+    PrimaryEmailAddr?: {
+      Address?: string;
+    };
+    PrimaryPhone?: {
+      FreeFormNumber?: string;
+    };
+    CurrencyRef?: NameValuePair;
+    BillAddr?: QuickBooksAddress;
+    DefaultTaxCodeRef?: NameValuePair;
+    Vendor1099?: boolean;
+    Balance?: number;
+    GivenName?: string;
+    Title?: string;
+    MiddleName?: string;
+    Suffix?: string;
+    FamilyName?: string;
+    CompanyName?: string;
+    Mobile?: {
+      FreeFormNumber?: string;
+    };
+    Fax?: {
+      FreeFormNumber?: string;
+    };
+    WebAddr?: {
+      URI?: string;
+    };
+    PrintOnCheckName?: string;
+    CostRate?: number;
+    BillRate?: number;
+    readonly SyncToken: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+    Active?: boolean;
+  }
+
+  export interface QuickBooksEmployee extends QuickBooksRestEntity {
+    DisplayName: string;
+    GivenName?: string;
+    MiddleName?: string;
+    FamilyName?: string;
+    Suffix?: string;
+    PrintOnCheckName?: string;
+    Title?: string;
+    EmployeeNumber?: string;
+    Active?: boolean;
+    PrimaryEmailAddr?: {
+      Address?: string;
+    };
+    Mobile?: {
+      FreeFormNumber?: string;
+    };
+    PrimaryPhone?: {
+      FreeFormNumber?: string;
+    };
+    PrimaryAddr?: QuickBooksAddress;
+    BillableTime?: boolean;
+    BillRate?: number;
+    HiredDate?: string;
+    ReleasedDate?: string;
+    readonly SyncToken: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export type QuickBooksTimeActivityNameOf = 'Employee' | 'Vendor';
+
+  export type QuickBooksBillableStatus = 'NotBillable' | 'Billable' | 'HasBeenBilled';
+
+  export interface QuickBooksTimeActivity extends QuickBooksRestEntity {
+    TxnDate?: string;
+    NameOf?: QuickBooksTimeActivityNameOf;
+    EmployeeRef?: NameValuePair;
+    VendorRef?: NameValuePair;
+    CustomerRef?: NameValuePair;
+    ItemRef?: NameValuePair;
+    ClassRef?: NameValuePair;
+    DepartmentRef?: NameValuePair;
+    Hours?: number;
+    Minutes?: number;
+    HourlyRate?: number;
+    BillableStatus?: QuickBooksBillableStatus;
+    Taxable?: boolean;
+    Description?: string;
+    StartTime?: string;
+    EndTime?: string;
+    readonly SyncToken: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QBOTxnTaxDetailTaxLine {
+    DetailType: 'TaxLineDetail';
+    TaxLineDetail: {
+      TaxRateRef: NameValuePair;
+      NetAmountTaxable?: number;
+      PercentBased?: boolean;
+      TaxInclusiveAmount?: number;
+      OverrideDeltaAmount?: number;
+      TaxPercent?: number;
+    };
+    Amount?: number;
+  }
+
+  export interface QBOTaxDetail {
+    TxnTaxCodeRef?: NameValuePair;
+    TotalTax?: number;
+    TaxLine?: QBOTxnTaxDetailTaxLine[];
+  }
+
+  export interface QuickBooksCustomField {
+    DefinitionId: string;
+    Name: string;
+    Type: 'StringType';
+    StringValue: string;
+  }
+
+  export interface QuickBooksBaseTxn extends QuickBooksRestEntity {
+    Line: Array<QuickBooksBaseTxnLine>;
+    CustomerRef: NameValuePair;
+    CurrencyRef?: NameValuePair;
+    ClassRef?: NameValuePair;
+    DepartmentRef?: NameValuePair;
+    TxnDate?: string;
+    PrivateNote?: string;
+    CustomerMemo?: ValueHolder;
+    TxnTaxDetail?: QBOTaxDetail;
+    ApplyTaxAfterDiscount?: boolean;
+    LinkedTxn?: Array<QuickBooksLinkedTransaction>;
+    BillEmail?: { Address: string };
+    BillAddr?: QuickBooksAddress;
+    ShipAddr?: QuickBooksAddress;
+    SalesTermRef?: NameValuePair;
+    DueDate?: string;
+    TotalAmt: number;
+    DocNumber?: string;
+    SyncToken?: string;
+    CustomField?: QuickBooksCustomField[];
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksInvoice extends QuickBooksBaseTxn {
+    EmailStatus?: 'NotSet' | 'NeedToSend' | 'EmailSent';
+    Deposit?: number;
+    AllowOnlineACHPayment?: boolean;
+    AllowOnlineCreditCardPayment?: boolean;
+    Balance: number;
+    // Customer-facing shareable URL for viewing/paying the invoice. Requires include=invoiceLink in query.
+    InvoiceLink?: string;
+  }
+
+  export interface QuickBooksEstimate extends QuickBooksBaseTxn {
+    TxnStatus?: EstimateStatusOption;
+    ExpirationDate?: string;
+    AcceptedDate?: string;
+    AcceptedBy?: string;
+  }
+
+  export type QuickBooksBaseTxnLine = {
+    Id?: string;
+    Description?: string;
+    LineNum?: number;
+    ProjectRef?: NameValuePair;
+  } & (
+    | QuickBooksBaseTxnSalesItemLine
+    | QuickBooksBaseTxnDescriptionOnlyLine
+    | QuickBooksBaseTxnDiscountLine
+    | QuickBooksBaseTxnSubTotalLine
+    | QuickBooksBaseTxnGroupLine
+  );
+
+  export interface QuickBooksSalesItemLineDetail {
+    ItemRef?: { value: string; name?: string; type?: string };
+    Qty?: number;
+    UnitPrice?: number;
+    TaxCodeRef?: { value: string; name?: string; type?: string };
+    ServiceDate?: string;
+    TaxInclusiveAmt?: number;
+    ClassRef?: NameValuePair;
+    ItemAccountRef?: NameValuePair;
+    /** Item automated sales-tax category. */
+    TaxClassificationRef?: { value: string; name?: string } | null;
+    MarkupInfo?: QuickBooksMarkupInfo;
+  }
+
+  export interface QuickBooksMarkupInfo {
+    PercentBased?: boolean;
+    Value?: number;
+    Percent?: number;
+    MarkUpIncomeAccountRef?: NameValuePair;
+    PriceLevelRef?: NameValuePair;
+  }
+
+  export interface QuickBooksBaseTxnSalesItemLine {
+    DetailType: 'SalesItemLineDetail';
+    SalesItemLineDetail: QuickBooksSalesItemLineDetail;
+    Amount: number;
+    LinkedTxn?: QuickBooksLinkedTransaction[];
+  }
+
+  export interface QuickBooksBaseTxnDescriptionOnlyLine {
+    DetailType: 'DescriptionOnly';
+    DescriptionLineDetail: Record<string, unknown>;
+  }
+
+  export interface QuickBooksDiscountLineDetail {
+    PercentBased?: boolean;
+    DiscountPercent?: number;
+    DiscountAccountRef?: NameValuePair;
+    DiscountRef?: NameValuePair;
+  }
+
+  export interface QuickBooksBaseTxnDiscountLine {
+    DetailType: 'DiscountLineDetail';
+    DiscountLineDetail: QuickBooksDiscountLineDetail;
+    Amount: number;
+  }
+
+  export interface QuickBooksTerm extends QuickBooksRestEntity {
+    Name: string;
+    DueDays?: number;
+  }
+
+  export interface QuickBooksClass extends QuickBooksRestEntity {
+    Name: string;
+    SubClass?: boolean;
+    ParentRef?: NameValuePair;
+    Active?: boolean;
+    FullyQualifiedName?: string;
+    SyncToken?: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksDepartment extends QuickBooksRestEntity {
+    Name: string;
+    SubDepartment?: boolean;
+    ParentRef?: NameValuePair;
+    Active?: boolean;
+    FullyQualifiedName?: string;
+    SyncToken?: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksItem extends QuickBooksRestEntity {
+    Name: string;
+    ClassRef?: NameValuePair;
+    ParentRef?: NameValuePair; // Category (parent item) when using item categories
+    SyncToken?: string; // required for update
+    FullyQualifiedName?: string;
+    Level?: number;
+    ItemCategoryType?: QuickBooksItemCategoryType;
+    Description?: string;
+    UnitPrice?: number;
+    Taxable?: boolean; // US only
+    Type?: QuickBooksItemType;
+    TrackQtyOnHand?: boolean; // Inventory only
+    QtyOnHand?: number; // Inventory only; initial quantity is supplied on create
+    InvStartDate?: string; // Inventory only; required when creating an initial quantity
+    Sku?: string;
+    SalesTaxIncluded?: boolean;
+    PurchaseTaxIncluded?: boolean;
+    ReorderPoint?: number;
+    PurchaseDesc?: string;
+    PurchaseCost?: number;
+    SubItem?: boolean;
+    Active?: boolean;
+    IncomeAccountRef?: NameValuePair;
+    AssetAccountRef?: NameValuePair; // Inventory only
+    ExpenseAccountRef?: NameValuePair;
+    TaxClassificationRef?: NameValuePair;
+    ItemGroupDetail?: {
+      ItemGroupLine: Array<{
+        ItemRef: NameValuePair & {
+          type?: Exclude<QuickBooksItemType, 'Category' | 'Group'>;
+        };
+        Qty: number;
+      }>;
+    };
+    PrintGroupedItems?: boolean;
+  }
+
+  export interface QuickBooksItemBasedExpenseLine {
+    Id?: string;
+    ProjectRef?: NameValuePair;
+    LinkedTxn?: QuickBooksLinkedTransaction[];
+    DetailType: 'ItemBasedExpenseLineDetail';
+    Amount: number;
+    Description?: string;
+    LineNum?: number;
+    ItemBasedExpenseLineDetail: {
+      TaxInclusiveAmt?: number;
+      ItemRef?: NameValuePair;
+      CustomerRef?: NameValuePair;
+      ClassRef?: NameValuePair;
+      PriceLevelRef?: NameValuePair;
+      TaxCodeRef?: { value: string; name?: string; type?: string };
+      BillableStatus?: 'NotBillable' | 'Billable' | 'HasBeenBilled';
+      Qty?: number;
+      UnitPrice?: number;
+      ItemAccountRef?: NameValuePair;
+      /** Item automated sales-tax category. */
+      TaxClassificationRef?: { value: string; name?: string } | null;
+      MarkupInfo?: QuickBooksMarkupInfo;
+    };
+  }
+
+  export interface QuickBooksAccountBasedExpenseLine {
+    Id?: string;
+    ProjectRef?: NameValuePair;
+    LinkedTxn?: QuickBooksLinkedTransaction[];
+    DetailType: 'AccountBasedExpenseLineDetail';
+    Amount: number;
+    Description?: string;
+    LineNum?: number;
+    AccountBasedExpenseLineDetail: {
+      AccountRef: NameValuePair;
+      TaxAmount?: number;
+      TaxInclusiveAmt?: number;
+      TaxCodeRef?: { value: string; name?: string; type?: string };
+      BillableStatus?: 'NotBillable' | 'Billable' | 'HasBeenBilled';
+      CustomerRef?: NameValuePair;
+      ClassRef?: NameValuePair;
+      MarkupInfo?: QuickBooksMarkupInfo;
+    };
+  }
+
+  export interface QuickBooksPurchase extends QuickBooksRestEntity {
+    SyncToken?: string; // required for update
+    Line: Array<QuickBooksItemBasedExpenseLine | QuickBooksAccountBasedExpenseLine>;
+    PaymentType: 'Cash' | 'Check' | 'CreditCard';
+    AccountRef: NameValuePair;
+    EntityRef?: NameValuePair; // Vendor/Entity reference
+    CurrencyRef?: NameValuePair; // required if multi-currency is enabled
+    DepartmentRef?: NameValuePair | ValueHolder | null;
+    PaymentMethodRef?: NameValuePair | ValueHolder | null;
+    DocNumber?: string;
+    TxnDate?: string;
+    PrivateNote?: string;
+    TotalAmt?: number; // read only
+    Credit?: boolean;
+  }
+
+  export interface QuickBooksBill extends QuickBooksRestEntity {
+    SyncToken?: string; // required for update
+    VendorRef: NameValuePair; // required
+    APAccountRef: NameValuePair; // accounts payable account
+    TxnDate?: string;
+    DueDate?: string;
+    TotalAmt: number; // readonly
+    Balance: number; // readonly, outstanding balance
+    Line: Array<QuickBooksItemBasedExpenseLine | QuickBooksAccountBasedExpenseLine>;
+    CurrencyRef?: NameValuePair;
+    ExchangeRate?: number; // for multi-currency
+    PrivateNote?: string;
+    LinkedTxn?: Array<QuickBooksLinkedTransaction>; // linked transactions like payments
+    CustomField?: QuickBooksCustomField[];
+    DocNumber?: string; // optional document number
+    SalesTermRef?: NameValuePair; // terms, if supported
+    ClassRef?: NameValuePair; // class, if supported
+    DepartmentRef?: NameValuePair;
+    TxnTaxDetail?: QBOTaxDetail; // tax details, if applicable
+    BillAddr?: QuickBooksAddress; // billing address
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksPurchaseOrder extends QuickBooksRestEntity {
+    SyncToken?: string;
+    VendorRef: NameValuePair;
+    APAccountRef?: NameValuePair;
+    TxnDate?: string;
+    DueDate?: string;
+    TotalAmt?: number;
+    POStatus?: string;
+    Line: Array<QuickBooksItemBasedExpenseLine | QuickBooksAccountBasedExpenseLine>;
+    CurrencyRef?: NameValuePair;
+    ExchangeRate?: number;
+    Memo?: string;
+    PrivateNote?: string;
+    LinkedTxn?: Array<QuickBooksLinkedTransaction>;
+    CustomField?: QuickBooksCustomField[];
+    DocNumber?: string;
+    SalesTermRef?: NameValuePair;
+    ClassRef?: NameValuePair;
+    DepartmentRef?: NameValuePair;
+    TxnTaxDetail?: QBOTaxDetail;
+    VendorAddr?: QuickBooksAddress;
+    ShipAddr?: QuickBooksAddress;
+    POEmail?: { Address?: string };
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksBillPaymentLine {
+    Amount: number;
+    LinkedTxn: QuickBooksLinkedTransaction[];
+  }
+
+  export interface QuickBooksBillPayment extends QuickBooksRestEntity {
+    SyncToken?: string; // required for update
+    VendorRef: NameValuePair; // required
+    PayType: 'Check' | 'CreditCard';
+    CheckPayment?: {
+      BankAccountRef: NameValuePair;
+    }; // if PayType is Check
+    CreditCardPayment?: {
+      CCAccountRef: NameValuePair;
+    }; // if PayType is CreditCard
+    TotalAmt: number;
+    CurrencyRef?: NameValuePair;
+    ExchangeRate?: number;
+    PrivateNote?: string;
+    TxnDate?: string;
+    Line: QuickBooksBillPaymentLine[];
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+  }
+
+  export interface QuickBooksSalesTaxCode extends QuickBooksRestEntity {
+    // TAXCODE entity type
+    Name: string;
+    Description?: string;
+    SalesTaxRateList?: {
+      TaxRateDetail?: Array<{
+        RateValue: number;
+        TaxRateRef: NameValuePair;
+      }>;
+    };
+  }
+
+  export interface QBOSalesTaxRate extends QuickBooksRestEntity {
+    Name: string;
+    RateValue: number;
+  }
+
+  export type CurrencyRef = {
+    value: string; // e.g., "USD"
+    name?: string; // e.g., "United States Dollar"
+  };
+
+  export type CurrencyPrefs = {
+    HomeCurrency: CurrencyRef;
+    MultiCurrencyEnabled?: boolean;
+    // Potentially other currency-related preferences
+  };
+
+  export type TaxPrefs = {
+    /**
+     * Indicates if sales tax is set up for the company.
+     */
+    UsingSalesTax: boolean;
+
+    /**
+     * Indicates the status of Automated Sales Tax (AST) for the company.
+     * - `true`: AST is enabled, and sales tax is set up (`UsingSalesTax` is true).
+     * - `false`: AST is enabled, but sales tax isn't set up (`UsingSalesTax` is false).
+     * - `undefined`: The company isn't enabled for AST.
+     */
+    PartnerTaxEnabled?: boolean;
+  };
+
+  export type SalesPrefsCustomFieldUsage = {
+    CustomField: {
+      Name:
+        | 'SalesFormsPrefs.UseSalesCustom1'
+        | 'SalesFormsPrefs.UseSalesCustom2'
+        | 'SalesFormsPrefs.UseSalesCustom3';
+      Type: 'BooleanType';
+      BooleanValue: boolean;
+    }[];
+  };
+
+  export type SalesPrefsCustomFieldNames = {
+    CustomField: {
+      Name:
+        | 'SalesFormsPrefs.SalesCustomName1'
+        | 'SalesFormsPrefs.SalesCustomName2'
+        | 'SalesFormsPrefs.SalesCustomName3';
+      Type: 'StringType';
+      StringValue: string;
+    }[];
+  };
+
+  export type SalesFormsPrefs = {
+    /**
+     * Indicates if QuickBooks Online Payments is enabled. When true,
+     * it allows both online credit card and ACH payments.
+     */
+    ETransactionPaymentEnabled?: boolean;
+    CustomField?: [SalesPrefsCustomFieldUsage, SalesPrefsCustomFieldNames];
+  };
+
+  export type AccountingInfoPrefs = {
+    ClassTrackingPerTxn?: boolean;
+    ClassTrackingPerTxnLine?: boolean;
+    TrackDepartments?: boolean;
+  };
+
+  export type ProductAndServicesPrefs = {
+    ForSales?: boolean;
+    ForPurchase?: boolean;
+    InventoryAndPurchaseOrder?: boolean;
+    QuantityWithPriceAndRate?: boolean;
+    QuantityOnHand?: boolean;
+    UOM?: string;
+    RevenueRecognition?: boolean;
+    RevenueRecognitionFrequency?: string;
+  };
+
+  export type QBOPreferences = {
+    Id?: string;
+    SyncToken?: string;
+    TaxPrefs: TaxPrefs;
+    SalesFormsPrefs: SalesFormsPrefs;
+    AccountingInfoPrefs?: AccountingInfoPrefs;
+    ProductAndServicesPrefs?: ProductAndServicesPrefs;
+    CurrencyPrefs?: CurrencyPrefs; // Added CurrencyPrefs as optional
+    OtherPrefs?: {
+      ProjectsEnabled?: boolean;
+      NameValue?: Array<{
+        Name?: string;
+        Value?: string;
+      }>;
+    };
+  };
+
+  export type QBOCompanyInfo = {
+    Id?: string;
+    SyncToken?: string;
+    CompanyName: string;
+    Country?: string;
+    Email?: { Address?: string };
+    WebAddr?: { URI?: string };
+    NameValue?: { Name: string; Value: string }[];
+  };
+
+  export type QuickBooksLinkedTransaction = {
+    TxnId: string;
+    TxnType: string;
+    TxnLineId?: string;
+  };
+
+  export type QuickBooksPaymentLine = {
+    Id?: string;
+    LineNum?: number;
+    Amount?: number;
+    LinkedTxn?: QuickBooksLinkedTransaction[];
+  };
+
+  export interface QuickBooksPayment extends QuickBooksRestEntity {
+    CustomerRef: NameValuePair;
+    ARAccountRef?: NameValuePair;
+    DepositToAccountRef?: NameValuePair;
+    TxnDate?: string;
+    TotalAmt?: number;
+    UnappliedAmt?: number;
+    PaymentMethodRef?: NameValuePair;
+    PaymentRefNum?: string;
+    PaymentType?: 'Cash' | 'Check' | 'CreditCard' | 'Other';
+    ProcessPayment?: boolean;
+    CurrencyRef?: NameValuePair;
+    ExchangeRate?: number;
+    PrivateNote?: string;
+    DepartmentRef?: NameValuePair;
+    DocNumber?: string;
+    TxnSource?: string;
+    SyncToken?: string;
+    readonly MetaData?: {
+      CreateTime: string;
+      LastUpdatedTime: string;
+    };
+    Line?: QuickBooksPaymentLine[];
+  }
+
+  export type QBOFaultType = 'AuthorizationFault' | 'ValidationFault' | (string & {});
+
+  export type QBOFaultErrorItem = {
+    Message?: string;
+    message?: string;
+    Detail?: string;
+    detail?: string;
+    code?: number | string;
+    element?: string;
+  };
+
+  export type QBOFault = {
+    Error?: QBOFaultErrorItem[];
+    error?: QBOFaultErrorItem[];
+    type?: QBOFaultType;
+  };
+
+  export type Account = QuickBooksAccount;
+
+  export type Attachable = QuickBooksAttachable;
+
+  export type Bill = QuickBooksBill;
+
+  export type BillPayment = QuickBooksBillPayment;
+
+  export type Class = QuickBooksClass;
+
+  export type CompanyInfo = QBOCompanyInfo;
+
+  export type Customer = QuickBooksCustomer;
+
+  export type Department = QuickBooksDepartment;
+
+  export type Employee = QuickBooksEmployee;
+
+  export type Estimate = QuickBooksEstimate;
+
+  export type Invoice = QuickBooksInvoice;
+
+  export type Item = QuickBooksItem;
+
+  export type Payment = QuickBooksPayment;
+
+  export type Preferences = QBOPreferences;
+
+  export type Purchase = QuickBooksPurchase;
+
+  export type PurchaseOrder = QuickBooksPurchaseOrder;
+
+  export type TaxCode = QuickBooksSalesTaxCode;
+
+  export type TaxRate = QBOSalesTaxRate;
+
+  export type Term = QuickBooksTerm;
+
+  export type TimeActivity = QuickBooksTimeActivity;
+
+  export type Vendor = QuickBooksVendor;
+
+  export type OAuthVersion = '1.0' | '1.0a' | '2.0';
+
+  export type Config = {
+    consumerKey: string;
+    consumerSecret: string;
+    token: string;
+    realmId: string;
+    useSandbox?: boolean;
+    debug?: boolean;
+    minorversion?: number | string | null;
+    refreshToken?: string | null;
+  } & (
+    | { oauthversion: '2.0'; tokenSecret?: string | false | null }
+    | { oauthversion?: '1.0' | '1.0a'; tokenSecret: string }
+  );
+
+  export interface MetaData {
+    CreateTime?: string;
+    LastUpdatedTime?: string;
+  }
+
+  export interface Ref {
+    value: string;
+    name?: string;
+    type?: string;
+  }
+
+  /** Common Intuit error bodies; callbacks accept unknown because HTTP errors may contain arbitrary bodies. */
+  export type QuickBooksError = Error | QBOFault | QBOFaultEnvelope | string;
+  export interface QBOFaultEnvelope {
+    Fault?: QBOFault;
+    fault?: QBOFault;
+    time?: string;
+  }
+
+  /** Entity callbacks receive the unwrapped entity; data can be absent or null on failure. */
+  export type QuickBooksCallback<T> = (
+    err: unknown,
+    data?: T | null,
+    res?: AxiosResponse<unknown>
+  ) => void;
+
+  export interface RefreshTokenResponse {
+    access_token: string;
+    refresh_token: string;
+    expires_in?: number;
+    x_refresh_token_expires_in?: number;
+    x_refresh_token_hard_expires_in?: number;
+    token_type?: string;
+    id_token?: string;
+  }
+
+  /** Refresh success returns token data; failure returns the HTTP response and its body. */
+  export type RefreshTokenCallback = (
+    err: unknown,
+    data?: RefreshTokenResponse | AxiosResponse<unknown>,
+    body?: unknown
+  ) => void;
+  export type OAuthResponseCallback = (
+    err: unknown,
+    response?: AxiosResponse<unknown>,
+    body?: unknown
+  ) => void;
+
+  export interface ConnectionResponse {
+    ErrorCode: number;
+    ErrorMessage?: string;
+    [field: string]: unknown;
+  }
+
+  export type QueryValue = string | number | boolean | null | Date;
+  export type QueryOperator = '=' | 'IN' | '<' | '>' | '<=' | '>=' | 'LIKE';
+  export interface QueryCriteriaObject {
+    fetchAll?: boolean;
+    limit?: number;
+    offset?: number;
+    count?: boolean;
+    desc?: string;
+    asc?: string;
+    [field: string]: QueryValue | readonly QueryValue[] | undefined;
+  }
+  export type QueryCriteriaArrayEntry =
+    | { field: string; value: QueryValue | readonly QueryValue[]; operator?: QueryOperator }
+    | (QueryCriteriaObject & { field?: never });
+  export type QueryCriteriaArray = readonly QueryCriteriaArrayEntry[];
+  /** A string is the criteria/where suffix, not a complete SQL query. */
+  export type QueryCriteria = QueryCriteriaObject | QueryCriteriaArray | string;
+  export interface QueryOptions {
+    qs?: Record<string, string | number | boolean | undefined>;
+    headers?: Record<string, string>;
+  }
+  export interface QueryMetadata {
+    startPosition?: number;
+    maxResults?: number;
+    totalCount?: number;
+  }
+  export interface QueryResponseData<T> {
+    QueryResponse: T & QueryMetadata;
+    time?: string;
+  }
+  /** Legacy entity-only generic. Prefer QueryResponseFor or QueryResponseData for named collections. */
+  export type QueryResponse<T> = QueryResponseData<Record<string, T[] | number | undefined>>;
+  export type CanonicalEntityName<K extends string> = K extends unknown
+    ? Lowercase<K> extends Lowercase<keyof EntityMap>
+      ? { [N in keyof EntityMap]: Lowercase<K> extends Lowercase<N> ? N : never }[keyof EntityMap]
+      : K
+    : never;
+  export type EntityFor<K extends string> =
+    CanonicalEntityName<K> extends infer N
+      ? N extends keyof EntityMap
+        ? EntityMap[N]
+        : QuickBooksRestEntity
+      : never;
+  export type QueryResponseFor<K extends string> = string extends K
+    ? QueryResponse<QuickBooksRestEntity>
+    : QueryResponseData<{ [N in CanonicalEntityName<K>]?: EntityFor<N>[] }>;
+
+  /** Envelope types apply to raw void/delete responses, not ordinary CRUD callbacks. */
+  export interface EntityResponse<T> {
+    [entity: string]: T | string | undefined;
+    time?: string;
+  }
+  export type EntityResponseFor<K extends keyof EntityMap> = { [N in K]: EntityMap[N] } & {
+    time?: string;
+  };
+  export type DeleteResponse<K extends keyof EntityMap> = { [N in K]: DeletedEntity } & {
+    time?: string;
+  };
+  export interface DeletedEntity {
+    Id: string;
+    status: 'Deleted';
+    domain?: string;
+    MetaData?: MetaData;
+  }
+  export type ChangeDataCaptureQueryResponse = QueryMetadata & {
+    [K in keyof EntityMap]?: Array<EntityMap[K] | DeletedEntity>;
+  };
+  export interface ChangeDataCaptureResponse {
+    CDCResponse: Array<{ QueryResponse: ChangeDataCaptureQueryResponse[] }>;
+    time?: string;
+    Fault?: QBOFault;
+  }
+
+  export type BatchItemRequest =
+    | { bId: string; query: string; operation?: 'query' }
+    | { bId: string; operation: 'create' | 'update' | 'delete'; [entity: string]: unknown };
+  export type QuickBooksBatchItem = {
+    bId?: string;
+    Fault?: QBOFault;
+    QueryResponse?: QueryMetadata & Record<string, unknown>;
+    [entity: string]: unknown;
+  };
+  export interface QuickBooksBatchResponse {
+    BatchItemResponse?: QuickBooksBatchItem[];
+    time?: string;
+  }
+
+  export interface ReportOptions {
+    start_date?: string;
+    end_date?: string;
+    accounting_method?: 'Cash' | 'Accrual';
+    [parameter: string]: string | number | boolean | undefined;
+  }
+  export interface ReportColumnData {
+    value?: string;
+    id?: string;
+  }
+  export interface ReportRow {
+    type?: string;
+    group?: string;
+    ColData?: ReportColumnData[];
+    Header?: { ColData?: ReportColumnData[] };
+    Summary?: { ColData?: ReportColumnData[] };
+    Rows?: { Row?: ReportRow[] };
+  }
+  export interface Report {
+    Header?: {
+      Time?: string;
+      ReportName?: string;
+      StartPeriod?: string;
+      EndPeriod?: string;
+      Currency?: string;
+      ReportBasis?: string;
+      Option?: Array<{ Name: string; Value: string }>;
+    };
+    Columns?: {
+      Column?: Array<{
+        ColTitle?: string;
+        ColType?: string;
+        MetaData?: Array<{ Name: string; Value: string }>;
+      }>;
+    };
+    Rows?: { Row?: ReportRow[] };
+  }
+
+  export type EntityVersion<SyncToken extends string | number = string> = {
+    Id: string | number;
+    SyncToken: SyncToken;
+  };
+  export interface WriteOptions {
+    requestId?: string;
+    allowDuplicateDocNum?: boolean;
+    sparse?: boolean;
+    void?: boolean;
+  }
+  /** Optional references may be explicitly cleared; required references remain required. */
+  export type WriteFields<T> = {
+    [K in keyof T]: K extends `${string}Ref` ? (undefined extends T[K] ? T[K] | null : T[K]) : T[K];
+  };
+  /** Creates omit identity and metadata. Updates are sparse by default in the implementation. */
+  export type CreateInput<T, RequiredFields extends keyof T = never> = Partial<
+    WriteFields<Omit<T, 'Id' | 'SyncToken' | 'MetaData' | 'domain' | 'sparse'>>
+  > &
+    Required<Pick<T, RequiredFields>> &
+    WriteOptions;
+  export type UpdateInput<T, SyncToken extends string | number = string> = Partial<
+    WriteFields<Omit<T, 'Id' | 'SyncToken' | 'MetaData' | 'domain'>>
+  > &
+    EntityVersion<SyncToken> &
+    WriteOptions;
+  export type UpdateItemInput = UpdateInput<Item> & { doNotUpdateAccountOnTxns?: boolean };
+  export type ExchangeRateInput = Omit<ExchangeRate, 'Id' | 'SyncToken' | 'MetaData'> &
+    WriteOptions;
+
+  export interface QuickBooksBaseTxnSubTotalLine {
+    DetailType: 'SubTotalLineDetail';
+    SubTotalLineDetail?: { ItemRef?: Ref };
+    Amount: number;
+  }
+  export interface QuickBooksBaseTxnGroupLine {
+    DetailType: 'GroupLineDetail';
+    GroupLineDetail: { GroupItemRef: Ref; Quantity?: number; Line?: QuickBooksBaseTxnLine[] };
+    Amount?: number;
+  }
+
+  export interface Budget extends QuickBooksRestEntity {
+    Name?: string;
+  }
+  export interface CompanyCurrency extends QuickBooksRestEntity {
+    Code?: string;
+  }
+  export interface CreditMemo extends QuickBooksBaseTxn {
+    RemainingCredit?: number;
+  }
+  export interface CustomerType extends QuickBooksRestEntity {
+    Name?: string;
+  }
+  export interface Deposit extends QuickBooksRestEntity {
+    DepositToAccountRef: Ref;
+    TxnDate?: string;
+    TotalAmt?: number;
+    Line: Array<{
+      Id?: string;
+      Amount: number;
+      Description?: string;
+      DetailType: 'DepositLineDetail';
+      DepositLineDetail: {
+        AccountRef?: Ref;
+        Entity?: Ref;
+        PaymentMethodRef?: Ref;
+        CheckNum?: string;
+      };
+    }>;
+  }
+  export interface JournalCode extends QuickBooksRestEntity {
+    Name: string;
+    Type?: string;
+  }
+  export interface JournalEntry extends QuickBooksRestEntity {
+    TxnDate?: string;
+    DocNumber?: string;
+    PrivateNote?: string;
+    CurrencyRef?: Ref;
+    ExchangeRate?: number;
+    Line: Array<{
+      Id?: string;
+      Amount: number;
+      Description?: string;
+      DetailType: 'JournalEntryLineDetail';
+      JournalEntryLineDetail: {
+        PostingType: 'Debit' | 'Credit';
+        AccountRef: Ref;
+        Entity?: { Type?: string; EntityRef?: Ref };
+        ClassRef?: Ref;
+        DepartmentRef?: Ref;
+        TaxCodeRef?: Ref;
+      };
+    }>;
+  }
+  export interface PaymentMethod extends QuickBooksRestEntity {
+    Name: string;
+    Type?: string;
+    Active?: boolean;
+  }
+  export interface RefundReceipt extends QuickBooksBaseTxn {
+    PaymentMethodRef?: Ref;
+    DepositToAccountRef?: Ref;
+  }
+  export interface SalesReceipt extends QuickBooksBaseTxn {
+    PaymentMethodRef?: Ref;
+    DepositToAccountRef?: Ref;
+  }
+  export interface TaxAgency extends QuickBooksRestEntity {
+    DisplayName: string;
+  }
+  export interface Transfer extends QuickBooksRestEntity {
+    FromAccountRef: Ref;
+    ToAccountRef: Ref;
+    Amount: number;
+    TxnDate?: string;
+    PrivateNote?: string;
+    CurrencyRef?: Ref;
+  }
+  export interface VendorCredit extends QuickBooksRestEntity {
+    VendorRef: Ref;
+    Line: Array<QuickBooksItemBasedExpenseLine | QuickBooksAccountBasedExpenseLine>;
+    TotalAmt?: number;
+    TxnDate?: string;
+    APAccountRef?: Ref;
+    CurrencyRef?: Ref;
+    PrivateNote?: string;
+    DocNumber?: string;
+  }
+  export interface ExchangeRate {
+    Id?: string;
+    SyncToken?: string;
+    SourceCurrencyCode: string;
+    TargetCurrencyCode?: string;
+    Rate: number;
+    AsOfDate?: string;
+    MetaData?: MetaData;
+  }
+
+  export interface EntityMap {
+    Account: Account;
+    Attachable: Attachable;
+    Bill: Bill;
+    BillPayment: BillPayment;
+    Budget: Budget;
+    Class: Class;
+    CompanyInfo: CompanyInfo;
+    CompanyCurrency: CompanyCurrency;
+    CreditMemo: CreditMemo;
+    Customer: Customer;
+    CustomerType: CustomerType;
+    Department: Department;
+    Deposit: Deposit;
+    Employee: Employee;
+    Estimate: Estimate;
+    Invoice: Invoice;
+    Item: Item;
+    JournalCode: JournalCode;
+    JournalEntry: JournalEntry;
+    Payment: Payment;
+    PaymentMethod: PaymentMethod;
+    Preferences: Preferences;
+    Purchase: Purchase;
+    PurchaseOrder: PurchaseOrder;
+    RefundReceipt: RefundReceipt;
+    SalesReceipt: SalesReceipt;
+    TaxAgency: TaxAgency;
+    TaxCode: TaxCode;
+    TaxRate: TaxRate;
+    Term: Term;
+    TimeActivity: TimeActivity;
+    Transfer: Transfer;
+    Vendor: Vendor;
+    VendorCredit: VendorCredit;
+    ExchangeRate: ExchangeRate;
+  }
+
+  export type CreateAccountInput = CreateInput<Account, 'Name' | 'AccountType'>;
+  export type CreateAttachableInput = CreateInput<Attachable>;
+  export type CreateBillInput = CreateInput<Bill, 'VendorRef' | 'Line'>;
+  export type CreateBillPaymentInput = CreateInput<
+    BillPayment,
+    'VendorRef' | 'PayType' | 'TotalAmt'
+  >;
+  export type CreateClassInput = CreateInput<Class, 'Name'>;
+  export type CreateCreditMemoInput = CreateInput<CreditMemo, 'CustomerRef' | 'Line'>;
+  export type CreateCustomerInput = CreateInput<Customer, 'DisplayName'>;
+  export type CreateDepartmentInput = CreateInput<Department, 'Name'>;
+  export type CreateDepositInput = CreateInput<Deposit, 'DepositToAccountRef' | 'Line'>;
+  export type CreateEmployeeInput = CreateInput<Employee, 'DisplayName'>;
+  export type CreateEstimateInput = CreateInput<Estimate, 'CustomerRef' | 'Line'>;
+  export type CreateInvoiceInput = CreateInput<Invoice, 'CustomerRef' | 'Line'>;
+  export type CreateItemInput = CreateInput<Item, 'Name'>;
+  export type CreateJournalCodeInput = CreateInput<JournalCode, 'Name'>;
+  export type CreateJournalEntryInput = CreateInput<JournalEntry, 'Line'>;
+  export type CreatePaymentInput = CreateInput<Payment, 'CustomerRef' | 'TotalAmt'>;
+  export type CreatePaymentMethodInput = CreateInput<PaymentMethod, 'Name'>;
+  export type CreatePurchaseInput = CreateInput<Purchase, 'PaymentType' | 'AccountRef' | 'Line'>;
+  export type CreatePurchaseOrderInput = CreateInput<PurchaseOrder, 'VendorRef' | 'Line'>;
+  export type CreateRefundReceiptInput = CreateInput<RefundReceipt, 'CustomerRef' | 'Line'>;
+  export type CreateSalesReceiptInput = CreateInput<SalesReceipt, 'CustomerRef' | 'Line'>;
+  export type CreateTaxAgencyInput = CreateInput<TaxAgency, 'DisplayName'>;
+  export type CreateTermInput = CreateInput<Term, 'Name'>;
+  export type CreateTimeActivityInput = CreateInput<TimeActivity>;
+  export type CreateTransferInput = CreateInput<
+    Transfer,
+    'FromAccountRef' | 'ToAccountRef' | 'Amount'
+  >;
+  export type CreateVendorInput = CreateInput<Vendor, 'DisplayName'>;
+  export type CreateVendorCreditInput = CreateInput<VendorCredit, 'VendorRef' | 'Line'>;
+}
+
+export = QuickBooks;

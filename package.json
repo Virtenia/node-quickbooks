@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "mocha",
-    "test:offline": "mocha test/offline.js"
+    "test:offline": "mocha test/offline.js",
+    "test:types": "tsc --project test/tsconfig.json"
   },
   "keywords": [
     "Intuit",
@@ -19,6 +20,7 @@
   "author": "Michael Cohen",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^24.19.2",
     "axios": "^1.20.0",
     "bluebird": "3.3.4",
     "date-fns": "^2.9.0",
@@ -34,7 +36,8 @@
     "async": "0.9.0",
     "expect": "0.1.1",
     "mocha": "12.0.3",
-    "ramda": "0.17.1"
+    "ramda": "0.17.1",
+    "typescript": "~7.0.2"
   },
   "directories": {
     "example": "example",
