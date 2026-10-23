@@ -6,7 +6,7 @@ nodejs client for Intuit's [QuickBooks API](https://developer.intuit.com/app/dev
 
 `npm install node-quickbooks`
 
-Requires Node.js 16 or newer.
+Requires Node.js 24 or newer.
 
 ## Documentation
 

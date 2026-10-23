@@ -173,6 +173,16 @@ describe('Offline merge regressions', function () {
     });
   });
 
+  it('escapes upload filenames so they cannot inject multipart headers', async function () {
+    reply = function () { return { body: { AttachableResponse: [{ Attachable: { Id: '42' } }] } }; };
+    var result = await call('upload', ['file"\r\nX-Injected: yes.pdf', 'application/pdf', Buffer.from('pdf')]);
+    assert.ifError(result.err);
+    assert.strictEqual(requests.length, 1);
+    var multipart = requests[0].body.toString();
+    assert.ok(multipart.includes('filename="file%22%0D%0AX-Injected: yes.pdf"'));
+    assert.ok(!multipart.includes('\r\nX-Injected:'));
+  });
+
   it('links an XML upload to the requested entity', async function () {
     reply = function (request) {
       if (request.url.pathname.endsWith('/upload')) {
